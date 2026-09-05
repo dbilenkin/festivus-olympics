@@ -1,0 +1,13 @@
+:root{
+  --barn:#8f2a1f; --corn:#e8b93b; --corn-lt:#f6d97a; --field:#4a7c3f;
+  --cream:#f7efdd; --linen:#fffaf0; --ink:#2a2118; --dirt:#6b4c33;
+  --serif:"Hoefler Text",Georgia,"Times New Roman",serif;
+  --sans:"Helvetica Neue",Arial,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body,#root{margin:0;padding:0;min-height:100%}
+body{
+  font-family:var(--serif); color:var(--ink); background:var(--cream);
+  -webkit-text-size-adjust:100%;
+}

@@ -1,0 +1,27 @@
+# deps / build
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# cdk
+cdk.out/
+.cdk.staging/
+
+# local env
+.env
+.env.local
+*.local
+
+# os
+.DS_Store
+
+# --- deliberately NOT published -------------------------------------------
+# Result data contains real people's names. The repo is public; the scores
+# are not. These stay on disk only.
+*BACKUP*.json
+*RECOVERED*.json
+Festivus Olympics*.csv
+
+# unreferenced 4MB image, dead weight in every Pages deploy
+Gemini_Generated_Image_*.jpeg
