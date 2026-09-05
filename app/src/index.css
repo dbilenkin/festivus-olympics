@@ -11,3 +11,100 @@ body{
   font-family:var(--serif); color:var(--ink); background:var(--cream);
   -webkit-text-size-adjust:100%;
 }
+
+/* ===================== THE RUN =====================
+   Deliberately breaks the parchment theme: maximum contrast for outdoors, and a
+   strong "you are in the timer now" mode signal. */
+.run-root{
+  position:fixed; inset:0; z-index:100;
+  display:flex; flex-direction:column;
+  background:#14100c; color:#fff8e2;
+  overscroll-behavior:none;                 /* kills pull-to-refresh mid-run */
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  padding-top:max(10px, env(safe-area-inset-top));
+  padding-bottom:max(12px, env(safe-area-inset-bottom));
+  padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+}
+.run-head{text-align:center; padding:6px 14px 2px; flex:0 0 auto}
+.run-kick{font-family:var(--sans); font-size:11px; font-weight:900; letter-spacing:.22em;
+  text-transform:uppercase; color:#a99a80}
+.run-who{font-family:var(--serif); font-size:clamp(22px,6vw,30px); font-weight:900;
+  text-transform:uppercase; letter-spacing:-.01em; line-height:1.1}
+
+/* the tap target: everything between the header and the strip */
+.run-body{
+  flex:1 1 auto; width:100%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:2px;
+  background:transparent; color:inherit;
+  border:4px solid #e8b93b; border-radius:18px;
+  margin:8px 10px; padding:10px;
+  touch-action:manipulation;                /* no 300ms double-tap-zoom delay */
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.run-body:active{background:rgba(232,185,59,.10)}
+.run-station{font-family:var(--serif); font-size:clamp(30px,9vw,52px); font-weight:900;
+  text-transform:uppercase; letter-spacing:-.02em; line-height:1; text-align:center}
+.run-clock{
+  font-family:var(--mono); font-weight:800; line-height:1;
+  font-size:clamp(52px,17vw,104px); letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;        /* stops digits jittering as they change */
+  color:#ffd24a; margin:6px 0 2px;
+}
+.run-clock-done{color:#7dff9a}
+.run-sub{font-family:var(--sans); font-size:15px; color:#a99a80; font-weight:700}
+.run-sub b{font-family:var(--mono); color:#fff8e2; font-size:17px}
+.run-cta{font-family:var(--sans); font-size:clamp(15px,4.4vw,21px); font-weight:900;
+  letter-spacing:.14em; text-transform:uppercase; color:#e8b93b; margin-top:18px; text-align:center}
+.run-cta .arw{opacity:.7}
+
+/* leg strip */
+.run-strip{flex:0 0 auto; display:flex; gap:5px; padding:0 10px 8px}
+.pip{flex:1 1 0; text-align:center; border-radius:9px; padding:7px 2px;
+  font-family:var(--sans); background:rgba(255,255,255,.07)}
+.pip span{display:block; font-size:11px; font-weight:900; opacity:.6}
+.pip em{display:block; font-style:normal; font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.03em; margin-top:1px}
+.pip.done{background:rgba(125,255,154,.16); color:#7dff9a}
+.pip.now{background:#e8b93b; color:#14100c}
+.pip.todo{opacity:.42}
+
+/* controls, kept clear of the iOS home-indicator swipe zone */
+.run-foot{flex:0 0 auto; display:flex; gap:8px; justify-content:center;
+  flex-wrap:wrap; padding:0 10px 4px}
+.rbtn{font-family:var(--sans); font-size:12.5px; font-weight:800; letter-spacing:.08em;
+  text-transform:uppercase; background:rgba(255,255,255,.10); color:#fff8e2;
+  border:2px solid rgba(255,255,255,.28); border-radius:10px; padding:11px 14px}
+.rbtn-go{background:#4a7c3f; border-color:#7dff9a; color:#fff; flex:1 1 160px}
+.rbtn-x{background:rgba(143,42,31,.5); border-color:#b8412f}
+.run-note{flex:0 0 auto; text-align:center; font-family:var(--sans); font-size:11px;
+  color:#a99a80; padding:0 16px 6px}
+
+/* ===================== SETUP =====================*/
+.wrap{max-width:620px; margin:0 auto; padding:20px 16px 40px}
+.hero-lite{text-align:center; padding:10px 0 18px}
+.hero-lite h1{font-size:clamp(28px,8vw,46px); font-weight:900; text-transform:uppercase;
+  letter-spacing:-.03em; line-height:.9; color:var(--barn);
+  text-shadow:2px 2px 0 var(--corn-lt)}
+.hero-lite p{font-family:var(--sans); font-size:11px; font-weight:800; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dirt); margin:10px 0 0}
+.card{background:var(--linen); border:3px solid var(--ink); border-radius:14px;
+  box-shadow:0 4px 0 rgba(0,0,0,.22); padding:16px; margin-bottom:18px}
+.card h2{font-family:var(--sans); font-size:12px; font-weight:900; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--dirt); margin:0 0 12px}
+.pickgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:8px}
+.pick{display:flex; flex-direction:column; align-items:center; gap:3px;
+  background:var(--cream); border:3px solid var(--ink); border-radius:12px;
+  padding:9px 4px; font-family:var(--sans); font-size:13px; font-weight:800;
+  box-shadow:0 3px 0 var(--ink); cursor:pointer}
+.pick svg{width:34px; height:44px}
+.pick[aria-pressed="true"]{background:var(--corn)}
+.bigbtn{display:block; width:100%; font-family:var(--sans); font-size:17px; font-weight:900;
+  letter-spacing:.12em; text-transform:uppercase; background:var(--field); color:#fff8e2;
+  border:3px solid var(--ink); border-radius:13px; box-shadow:0 5px 0 var(--ink);
+  padding:18px; margin-top:6px; cursor:pointer}
+.bigbtn:disabled{opacity:.4}
+.bigbtn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--ink)}
+.res{font-family:var(--mono); font-size:13px; border-bottom:1px dashed #d9cbb0;
+  padding:8px 2px; display:flex; gap:10px}
+.res b{font-family:var(--sans); flex:1 1 auto}
+.note{font-family:var(--sans); font-size:12px; color:var(--dirt); line-height:1.65}
