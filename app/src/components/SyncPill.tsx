@@ -20,5 +20,5 @@ export default function SyncPill() {
     : pending ? `${outbox} waiting`
     : lastSyncAt ? "Saved" : "Connecting…";
 
-  return <div className={"pill " + cls}><i />{label}</div>;
+  return <div className={"syncpill " + cls}><i />{label}</div>;
 }

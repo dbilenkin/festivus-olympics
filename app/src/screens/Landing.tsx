@@ -81,10 +81,7 @@ export default function Landing() {
 
   return (
     <div className="wrap">
-      <div className="hero-lite">
-        <h1>Pond Neck<br />Olympics</h1>
-        <p>Five games · eight souls · two teams</p>
-      </div>
+
 
       {list.length > 0 && (
         <div className="card corn">
@@ -124,7 +121,7 @@ export default function Landing() {
           <input value={join} placeholder="https://…#/e/pond-neck-2026-ab12cd"
             onChange={(e) => setJoin(e.target.value)} />
         </label>
-        <button className="bigbtn" style={{ background: "var(--plain, #2f5aa0)" }}
+        <button className="btn lg blue"
           disabled={busy !== null || !join.trim()} onClick={openExisting}>
           {busy === "join" ? "Looking…" : "Open it"}
         </button>
@@ -136,7 +133,7 @@ export default function Landing() {
           <span>Event name</span>
           <input value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
         </label>
-        <button className="bigbtn" disabled={busy !== null} onClick={create}>
+        <button className="btn lg green" disabled={busy !== null} onClick={create}>
           {busy === "create" ? "Creating…" : "Create event"}
         </button>
       </div>

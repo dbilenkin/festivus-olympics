@@ -87,6 +87,22 @@ export default function App() {
     <>
       <Hero eventName={eventId ? name : undefined} />
 
+      {/* Pages outside an event get their own nav, so All Time is never a dead end. */}
+      {!eventId && (
+        <nav className="tabs" role="tablist" aria-label="Sections">
+          <div className="tabs-in">
+            <button className="tab" role="tab" aria-selected={panel !== "all"}
+              onClick={() => go(null, "home")}>
+              <span className="ic">&#127805;</span>Events
+            </button>
+            <button className="tab" role="tab" aria-selected={panel === "all"}
+              onClick={() => go(null, "all")}>
+              <span className="ic">&#127941;</span>All Time
+            </button>
+          </div>
+        </nav>
+      )}
+
       {eventId && (
         <nav className="tabs" role="tablist" aria-label="Sections">
           <div className="tabs-in">

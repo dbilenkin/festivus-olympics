@@ -63,7 +63,7 @@ export default function Draw() {
             <use href="#s-hat" width="120" height="90" />
           </svg>
         </div>
-        <button className="bigbtn" disabled={drawing || players.length < 2} onClick={shake}>
+        <button className="btn lg green" disabled={drawing || players.length < 2} onClick={shake}>
           {drawing ? "Shaking…" : teams.drawn ? "Draw again" : "Shake the hat"}
         </button>
         <p className="note" style={{ color: "#c9b997", textAlign: "center", marginTop: 10 }}>

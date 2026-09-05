@@ -1,300 +1,102 @@
-/* Only what the original theme does not already cover: the run screen, sync status,
-   the phone score cards, and the two-column laptop deck. Everything else -- palette,
-   cards, tables, buttons, hero, footer -- comes from styles-original.css verbatim. */
-/* ===================== THE RUN =====================
-   Deliberately breaks the parchment theme: maximum contrast for outdoors, and a
-   strong "you are in the timer now" mode signal. */
-.run-root{
-  position:fixed; inset:0; z-index:100;
-  display:flex; flex-direction:column;
-  background:#14100c; color:#fff8e2;
-  overscroll-behavior:none;                 /* kills pull-to-refresh mid-run */
-  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
-  padding-top:max(10px, env(safe-area-inset-top));
-  padding-bottom:max(12px, env(safe-area-inset-bottom));
-  padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
-}
-.run-head{text-align:center; padding:6px 14px 2px; flex:0 0 auto}
-.run-kick{font-family:var(--sans); font-size:11px; font-weight:900; letter-spacing:.22em;
-  text-transform:uppercase; color:#a99a80}
-.run-who{font-family:var(--serif); font-size:clamp(22px,6vw,30px); font-weight:900;
-  text-transform:uppercase; letter-spacing:-.01em; line-height:1.1}
+/* Additions to styles-original.css, which owns the whole look: palette, cards,
+   tables, buttons, tabs, hero, footer.
+   Rule for this file: never redefine a selector the original already styles. Where a
+   component needs its own treatment it is namespaced under its own root, so the two
+   sheets cannot half-apply to each other and produce things like pale-gold text on a
+   cream button. */
 
-/* the tap target: everything between the header and the strip */
-.run-body{
-  /* No width:100% here. This is a flex-column child so it already stretches, and
-     width:100% PLUS horizontal margins is 20px wider than the container -- which
-     pushed the right-hand border off the screen. */
-  flex:1 1 auto; min-width:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:2px;
-  background:transparent; color:inherit;
-  border:4px solid #e8b93b; border-radius:18px;
-  margin:8px 10px; padding:10px;
-  touch-action:manipulation;                /* no 300ms double-tap-zoom delay */
-  cursor:pointer; -webkit-tap-highlight-color:transparent;
-}
-.run-body:active{background:rgba(232,185,59,.10)}
-.run-station{font-family:var(--serif); font-size:clamp(30px,9vw,52px); font-weight:900;
-  text-transform:uppercase; letter-spacing:-.02em; line-height:1; text-align:center}
-.run-clock{
-  font-family:var(--mono); font-weight:800; line-height:1;
-  font-size:clamp(52px,17vw,104px); letter-spacing:-.03em;
-  font-variant-numeric:tabular-nums;        /* stops digits jittering as they change */
-  color:#ffd24a; margin:6px 0 2px;
-}
-.run-clock-done{color:#7dff9a}
-.run-sub{font-family:var(--sans); font-size:15px; color:#a99a80; font-weight:700}
-.run-sub b{font-family:var(--mono); color:#fff8e2; font-size:17px}
-.run-cta{font-family:var(--sans); font-size:clamp(15px,4.4vw,21px); font-weight:900;
-  letter-spacing:.14em; text-transform:uppercase; color:#e8b93b; margin-top:18px; text-align:center}
-.run-cta .arw{opacity:.7}
+/* ---------------------------------------------------------------- layout */
+/* Phone first, but a laptop has room for the grid plus live standings beside it. */
+.wrap{max-width:640px}
+@media (min-width:760px){ .wrap{max-width:1180px; padding:0 24px} }
 
-/* leg strip */
-.run-strip{flex:0 0 auto; display:flex; gap:5px; padding:0 10px 8px}
-.pip{flex:1 1 0; text-align:center; border-radius:9px; padding:7px 2px;
-  font-family:var(--sans); background:rgba(255,255,255,.07)}
-.pip span{display:block; font-size:11px; font-weight:900; opacity:.6}
-.pip em{display:block; font-style:normal; font-size:11px; font-weight:800;
-  text-transform:uppercase; letter-spacing:.03em; margin-top:1px}
-.pip.done{background:rgba(125,255,154,.16); color:#7dff9a}
-.pip.now{background:#e8b93b; color:#14100c}
-.pip.todo{opacity:.42}
-
-/* controls, kept clear of the iOS home-indicator swipe zone */
-.run-foot{flex:0 0 auto; display:flex; gap:8px; justify-content:center;
-  flex-wrap:wrap; padding:0 10px 4px}
-.rbtn{font-family:var(--sans); font-size:12.5px; font-weight:800; letter-spacing:.08em;
-  text-transform:uppercase; background:rgba(255,255,255,.10); color:#fff8e2;
-  border:2px solid rgba(255,255,255,.28); border-radius:10px; padding:11px 14px}
-.rbtn-go{background:#4a7c3f; border-color:#7dff9a; color:#fff; flex:1 1 160px}
-.rbtn-x{background:rgba(143,42,31,.5); border-color:#b8412f}
-.run-note{flex:0 0 auto; text-align:center; font-family:var(--sans); font-size:11px;
-  color:#a99a80; padding:0 16px 6px}
-
-/* ===================== SETUP =====================*/
-/* Phone first, but a laptop has room for the whole grid plus live standings beside it.
-   The old fixed 620px both wasted half a laptop screen AND clipped the Total column. */
-.wrap{max-width:640px; margin:0 auto; padding:20px 16px 40px}
-@media (min-width:760px){ .wrap{max-width:1180px; padding:24px 24px 60px} }
-
-/* two-column on a laptop: score grid on the left, standings alongside */
 .deck{display:grid; gap:20px}
-/* Only split once there is genuinely room for the full grid AND the board -- below
-   this the single column is wider and the Total column stops getting clipped. */
 @media (min-width:1120px){ .deck{grid-template-columns:minmax(0,1fr) 300px; align-items:start} }
 .deck > *{min-width:0}
 .side{position:sticky; top:16px}
-.hero-lite{text-align:center; padding:10px 0 18px}
-.hero-lite h1{font-size:clamp(28px,8vw,46px); font-weight:900; text-transform:uppercase;
-  letter-spacing:-.03em; line-height:.9; color:var(--barn);
-  text-shadow:2px 2px 0 var(--corn-lt)}
-.hero-lite p{font-family:var(--sans); font-size:11px; font-weight:800; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--dirt); margin:10px 0 0}
-.card{background:var(--linen); border:3px solid var(--ink); border-radius:14px;
-  box-shadow:0 4px 0 rgba(0,0,0,.22); padding:16px; margin-bottom:18px}
-.card h2{font-family:var(--sans); font-size:12px; font-weight:900; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--dirt); margin:0 0 12px}
-.pickgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:8px}
-.pick{display:flex; flex-direction:column; align-items:center; gap:3px;
-  background:var(--cream); border:3px solid var(--ink); border-radius:12px;
-  padding:9px 4px; font-family:var(--sans); font-size:13px; font-weight:800;
-  box-shadow:0 3px 0 var(--ink); cursor:pointer}
-.pick svg{width:34px; height:44px}
-.pick[aria-pressed="true"]{background:var(--corn)}
-.bigbtn{display:block; width:100%; font-family:var(--sans); font-size:17px; font-weight:900;
-  letter-spacing:.12em; text-transform:uppercase; background:var(--field); color:#fff8e2;
-  border:3px solid var(--ink); border-radius:13px; box-shadow:0 5px 0 var(--ink);
-  padding:18px; margin-top:6px; cursor:pointer}
-.bigbtn:disabled{opacity:.4}
-.bigbtn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--ink)}
-.res{font-family:var(--mono); font-size:13px; border-bottom:1px dashed #d9cbb0;
-  padding:8px 2px; display:flex; gap:10px}
-.res b{font-family:var(--sans); flex:1 1 auto}
-.note{font-family:var(--sans); font-size:12px; color:var(--dirt); line-height:1.65}
-.rbtn-back{background:rgba(232,185,59,.16); border-color:#e8b93b; color:#ffd24a}
-.modes{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-.mode{background:var(--cream); border:3px solid var(--ink); border-radius:12px;
-  box-shadow:0 3px 0 var(--ink); padding:12px 10px; text-align:left; cursor:pointer;
-  font-family:var(--sans)}
-.mode[aria-pressed="true"]{background:var(--corn)}
-.mode b{display:block; font-size:15px; font-weight:900}
-.mode i{display:block; font-style:normal; font-size:11px; color:var(--dirt); margin-top:2px}
-.swatch{width:26px; height:26px; border-radius:7px; border:2px solid var(--ink); display:block}
+.deck2{display:grid; gap:18px}
+@media (min-width:900px){ .deck2{grid-template-columns:1fr 1fr; align-items:start} }
 
-/* ===================== APP SHELL =====================*/
-.apphead{display:flex; align-items:center; gap:10px; padding:14px 0 8px}
-.apphead .ev{font-family:var(--serif); font-size:22px; font-weight:900;
-  text-transform:uppercase; letter-spacing:-.01em; line-height:1.05; color:var(--barn)}
-.linkish{background:none; border:0; padding:0; font-family:var(--sans); font-size:11px;
-  font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--dirt); cursor:pointer}
-.pill{margin-left:auto; display:inline-flex; align-items:center; gap:7px; flex:0 0 auto;
+.evbar{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.linkish{background:none; border:0; padding:0; cursor:pointer; font-family:var(--sans);
+  font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--dirt)}
+
+/* home-level nav, for the pages that sit outside an event */
+.homenav{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px}
+
+/* --------------------------------------------------------------- sync pill */
+/* Named apart from the original's .pill badge so neither inherits the other's colours. */
+.syncpill{margin-left:auto; display:inline-flex; align-items:center; gap:7px; flex:0 0 auto;
   font-family:var(--sans); font-size:10px; font-weight:800; letter-spacing:.1em;
-  text-transform:uppercase; border:2px solid var(--ink); border-radius:999px; padding:6px 11px;
-  background:var(--linen)}
-.pill i{width:8px; height:8px; border-radius:50%; background:var(--dirt); display:block}
-.pill.ok i{background:#3f8f4a} .pill.pend i{background:#e8b93b}
-.pill.off{background:#f0d9d4} .pill.off i{background:#8f2a1f}
+  text-transform:uppercase; border:2px solid var(--ink); border-radius:999px;
+  padding:6px 11px; background:var(--linen); color:var(--ink)}
+.syncpill i{width:8px; height:8px; border-radius:50%; background:var(--dirt); display:block}
+.syncpill.ok i{background:#3f8f4a}
+.syncpill.pend i{background:#b8891f}
+.syncpill.off{background:#f0d9d4; color:#5e1a12}
+.syncpill.off i{background:#8f2a1f}
 
-.tabs{display:flex; gap:6px; margin-bottom:14px; overflow-x:auto}
-.tab{flex:0 0 auto; font-family:var(--sans); font-size:12px; font-weight:800;
-  letter-spacing:.1em; text-transform:uppercase; background:var(--linen);
-  border:3px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink);
-  padding:9px 15px; cursor:pointer}
-.tab[aria-pressed="true"]{background:var(--barn); color:#fff8e2}
-
-.rtabs{display:flex; gap:6px; margin-bottom:12px; overflow-x:auto}
-.rtab{flex:0 0 auto; font-family:var(--sans); font-size:11px; font-weight:800;
-  letter-spacing:.08em; text-transform:uppercase; background:var(--linen);
-  border:2px solid var(--ink); border-radius:999px; padding:7px 13px; cursor:pointer}
-.rtab[aria-pressed="true"]{background:var(--corn)}
-.rtab.add{background:var(--field); color:#fff8e2}
-
-.fld{display:block; margin-bottom:12px}
-.fld span{display:block; font-family:var(--sans); font-size:10px; font-weight:800;
-  letter-spacing:.16em; text-transform:uppercase; color:var(--dirt); margin-bottom:5px}
-input{background:#fff; color:var(--ink); border:2px solid var(--dirt); border-radius:8px;
-  padding:10px; font-size:16px; width:100%; font-family:var(--sans)}
-.rowbtn{display:flex; width:100%; align-items:center; gap:10px; background:var(--cream);
-  border:2px solid var(--ink); border-radius:10px; padding:11px; margin-bottom:8px;
-  font-family:var(--sans); text-align:left; cursor:pointer}
-.rowbtn b{flex:1 1 auto; font-size:15px}
-.rowbtn span{font-family:var(--mono); font-size:11px; color:var(--dirt)}
-
-/* tables */
-.tbl{overflow-x:auto; border:2px solid var(--ink); border-radius:10px}
-table{border-collapse:collapse; width:100%; background:#fff; font-family:var(--sans); font-size:14px}
-th,td{padding:7px 8px; text-align:right; border-bottom:1px solid #e2d6bd; white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-thead th{background:var(--ink); color:var(--corn-lt); font-size:10px; font-weight:900;
-  letter-spacing:.1em; text-transform:uppercase; position:sticky; top:0}
-tbody tr.r1{background:rgba(232,185,59,.28)}
-td.num,th.num{font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums}
-td.tot{font-weight:800; background:#fbf1d8}
-td input{width:64px; text-align:right; font-family:var(--mono); font-size:13px; padding:6px}
-.who{display:inline-flex; align-items:center; gap:6px}
-.who svg{width:22px; height:29px; flex:0 0 auto}
-.runbtn{background:var(--field); color:#fff; border:2px solid var(--ink); border-radius:7px;
-  width:30px; height:30px; font-size:12px; margin-left:4px; cursor:pointer; flex:0 0 auto}
-
-.champ{display:flex; align-items:center; gap:16px;
-  background:linear-gradient(135deg,#fff8e2,#f6d97a); border-color:var(--barn)}
-.champ .kick{font-family:var(--sans); font-size:10px; font-weight:900; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--barn)}
-.champ .nm{font-family:var(--serif); font-size:32px; font-weight:900; text-transform:uppercase;
-  line-height:1; color:#5e1a12}
-.champ .sub{font-family:var(--mono); font-size:13px; margin-top:3px}
-
-.recs{display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:9px}
-.rec{background:#fff; border:3px solid var(--ink); border-radius:11px; padding:9px 6px;
-  text-align:center; position:relative; overflow:hidden}
-.rec::after{content:""; position:absolute; inset:auto 0 0 0; height:5px; background:currentColor}
-.rec .k{font-family:var(--sans); font-size:8.5px; font-weight:900; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--dirt)}
-.rec .v{font-family:var(--mono); font-size:19px; font-weight:800; color:var(--ink); margin:3px 0}
-.rec .w{font-family:var(--sans); font-size:12px; font-weight:900}
-.conflict{border-color:var(--barn); background:#fdf2ef}
-code{font-family:var(--mono); font-size:12px; background:var(--cream); padding:1px 5px; border-radius:4px}
-.crash{font-family:var(--mono); font-size:11px; background:var(--cream); border:2px solid var(--dirt);
-  border-radius:8px; padding:10px; overflow-x:auto; margin-bottom:12px; white-space:pre-wrap}
-.qrcard{display:flex; flex-direction:column; align-items:center}
-.qrcard h2{align-self:flex-start}
-.qrcard svg{border:3px solid var(--ink); box-shadow:0 4px 0 rgba(0,0,0,.22)}
-.btnrow{display:flex; gap:8px; margin-top:10px}
-.btnrow .bigbtn{margin-top:0}
-.bigbtn.alt{background:var(--plain,#2f5aa0)}
-
-/* ============ phone: one card per competitor ============ */
+/* ------------------------------------------------------- phone score cards */
+/* Five numeric columns cannot fit beside eight names on a phone, so each competitor
+   gets a card with every station labelled. Vertical scrolling only. */
 .cards{display:grid; gap:10px}
 .pcard{border:3px solid var(--ink); border-radius:13px; background:#fff;
   box-shadow:0 3px 0 rgba(0,0,0,.18); overflow:hidden}
-.pcard.lead{box-shadow:0 3px 0 var(--corn-dk,#b8891f)}
+.pcard.lead{box-shadow:0 3px 0 var(--corn-dk)}
 .pcard-hd{display:flex; align-items:center; gap:9px; padding:9px 11px;
-  background:var(--cream); border-bottom:2px solid var(--ink)}
+  background:var(--cream); border-bottom:2px solid var(--ink); color:var(--ink)}
 .pcard.lead .pcard-hd{background:rgba(232,185,59,.42)}
 .pcard-hd svg{width:26px; height:34px; flex:0 0 auto}
 .pcard-hd b{font-family:var(--sans); font-size:17px; font-weight:900}
 .ptot{margin-left:auto; font-family:var(--mono); font-size:15px; font-weight:800}
-.runbtn.big{width:auto; height:36px; padding:0 12px; display:inline-flex; align-items:center;
-  gap:5px; font-size:12px}
-.runbtn.big em{font-style:normal; font-family:var(--sans); font-weight:900;
-  letter-spacing:.08em; text-transform:uppercase; font-size:11px}
-.pcard-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:8px; padding:11px}
+.pcard-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr));
+  gap:8px; padding:11px}
 .scell{display:block}
 .scell span{display:block; font-family:var(--sans); font-size:9.5px; font-weight:900;
   letter-spacing:.1em; text-transform:uppercase; margin-bottom:3px}
 .scell input{width:100%; text-align:right; font-family:var(--mono); font-size:16px; padding:9px 8px}
 
-/* wide table: give every station a real column and stop clipping Total */
-@media (min-width:760px){
-  td input{width:82px; font-size:15px; padding:8px}
-  th,td{padding:9px 9px}
-  .pcard-grid{grid-template-columns:repeat(5,1fr)}
-}
-/* the split layout gives the grid less room, so tighten the cells rather than clip */
-@media (min-width:1120px){
-  .deck td input{width:72px; font-size:14px; padding:7px 6px}
-  .deck th,.deck td{padding:8px 7px}
-}
-.board{list-style:none; margin:0; padding:0}
-.board li{display:flex; align-items:center; gap:8px; padding:7px 4px;
-  border-bottom:1px dashed #d9cbb0; font-family:var(--sans)}
-.board li:last-child{border-bottom:0}
-.board li.lead{background:rgba(232,185,59,.3); border-radius:8px; padding-left:8px}
-.board .pos{width:18px; font-size:11px; font-weight:900; color:var(--dirt)}
-.board svg{width:22px; height:29px; flex:0 0 auto}
-.board b{flex:1 1 auto; font-size:14px}
-.board .t{font-family:var(--mono); font-size:13px; font-weight:800}
+/* the score grid's own cells, on top of the original table styling */
+.entrytable td input{width:82px; text-align:right; font-family:var(--mono);
+  font-size:14px; padding:7px}
+@media (min-width:1120px){ .deck .entrytable td input{width:72px; font-size:13.5px; padding:6px} }
+.who{display:inline-flex; align-items:center; gap:6px}
+.who svg{width:22px; height:29px; flex:0 0 auto}
+.runbtn{background:var(--field); color:#fff8e2; border:2px solid var(--ink);
+  border-radius:7px; width:30px; height:30px; font-size:12px; margin-left:4px;
+  cursor:pointer; flex:0 0 auto}
+.runbtn.big{width:auto; height:36px; padding:0 12px; display:inline-flex;
+  align-items:center; gap:5px}
+.runbtn.big em{font-style:normal; font-family:var(--sans); font-weight:900;
+  letter-spacing:.08em; text-transform:uppercase; font-size:11px}
 
-/* ============ roster / draw ============ */
-.deck2{display:grid; gap:18px}
-@media (min-width:900px){ .deck2{grid-template-columns:1fr 1fr; align-items:start} }
+/* ------------------------------------------------------------ mode chooser */
+.modes{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.mode{background:var(--cream); color:var(--ink); border:3px solid var(--ink);
+  border-radius:12px; box-shadow:0 3px 0 var(--ink); padding:12px 10px;
+  text-align:left; cursor:pointer; font-family:var(--sans)}
+.mode[aria-pressed="true"]{background:var(--corn); color:var(--ink)}
+.mode b{display:block; font-size:15px; font-weight:900}
+.mode i{display:block; font-style:normal; font-size:11px; color:var(--dirt); margin-top:2px}
+.pickgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:8px}
+.pick{display:flex; flex-direction:column; align-items:center; gap:4px;
+  background:var(--cream); color:var(--ink); border:3px solid var(--ink);
+  border-radius:12px; padding:9px 4px; font-family:var(--sans); font-size:13px;
+  font-weight:800; box-shadow:0 3px 0 var(--ink); cursor:pointer}
+.pick[aria-pressed="true"]{background:var(--corn)}
+.swatch{width:26px; height:26px; border-radius:7px; border:2px solid var(--ink); display:block}
+.swatch.sm{width:14px; height:14px; border-radius:4px; display:inline-block}
+
+/* ------------------------------------------------------------- roster/draw */
 .rosterrow{display:flex; align-items:center; gap:9px; margin-bottom:8px}
 .rosterrow svg{width:26px; height:34px; flex:0 0 auto}
-.rosterrow .swatch{flex:0 0 auto}
-
-.drawstage{background:radial-gradient(circle at 50% 0%, #3e6d9c, #1d3b63 60%, #16283f);
-  border-color:var(--ink); color:var(--linen); text-align:center}
-.drawstage h2{color:var(--corn-lt)!important}
-.hat{max-width:170px; margin:4px auto 14px}
-.hat svg{width:100%; height:auto; filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
-.hat svg.shaking{animation:shake .42s ease-in-out infinite}
-@keyframes shake{0%,100%{transform:rotate(-4deg) translateY(0)}
-  25%{transform:rotate(5deg) translateY(-6px)}50%{transform:rotate(-5deg) translateY(2px)}
-  75%{transform:rotate(4deg) translateY(-4px)}}
-
 .teamgrid{display:grid; gap:16px; margin-top:18px}
 @media (min-width:760px){ .teamgrid{grid-template-columns:1fr 1fr} }
-.team{border:4px solid var(--ink); border-radius:14px; overflow:hidden; background:var(--linen);
-  box-shadow:0 4px 0 rgba(0,0,0,.22)}
-.team-hd{display:flex; align-items:center; gap:11px; padding:12px 14px; color:#fff8e2;
-  border-bottom:4px solid var(--ink)}
-.team.A .team-hd{background:linear-gradient(135deg,#8f2a1f,#5e1a12)}
-.team.B .team-hd{background:linear-gradient(135deg,#2c4470,#1c2c4c)}
-.team-hd svg{width:42px; height:42px; flex:0 0 auto}
-.team-hd b{font-family:var(--serif); font-size:20px; font-weight:900; text-transform:uppercase}
-.team-hd i{display:block; font-family:var(--sans); font-style:normal; font-size:10px;
-  font-weight:800; letter-spacing:.18em; text-transform:uppercase; opacity:.82; margin-top:2px}
-.teamname{background:rgba(255,255,255,.94); font-family:var(--serif); font-size:18px;
-  font-weight:900; text-transform:uppercase; padding:5px 8px; border-width:2px}
-.roster-list{list-style:none; margin:0; padding:8px 12px}
-.roster-list li{display:flex; align-items:center; gap:9px; padding:8px 4px;
-  border-bottom:1px dashed #d9cbb0; font-family:var(--sans); font-size:15px; font-weight:700}
-.roster-list li:last-child{border-bottom:0}
-.roster-list li.muted{opacity:.55; font-weight:400}
-.roster-list svg{width:28px; height:36px; flex:0 0 auto}
+.teamname{background:rgba(255,255,255,.94); color:var(--ink); font-family:var(--serif);
+  font-size:18px; font-weight:900; text-transform:uppercase; padding:5px 8px; border-width:2px}
 
-/* ============ relays ============ */
-.relayhd{margin-bottom:10px}
-.relayname{font-family:var(--sans); font-weight:900; font-size:13px; letter-spacing:.14em;
-  text-transform:uppercase; max-width:260px}
-.vs{display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center;
-  padding:14px 10px; background:var(--ink); color:var(--linen); border-radius:11px}
-.vside{text-align:center; min-width:0}
-.vside .tm{font-family:var(--sans); font-size:10px; font-weight:900; letter-spacing:.14em;
-  text-transform:uppercase; opacity:.8; overflow-wrap:anywhere}
-.vside .tt{font-family:var(--mono); font-size:clamp(22px,6vw,34px); font-weight:800; line-height:1.15}
-.vside.win .tt{color:var(--corn)}
-.vmid{font-family:var(--serif); font-size:20px; font-weight:900; color:#b8412f}
+/* ---------------------------------------------------------------- relays */
+/* Own grid: four columns, unlike the original five-column relay leg. */
 .squads{display:grid; gap:14px; margin-top:14px}
 @media (min-width:820px){ .squads{grid-template-columns:1fr 1fr} }
 .squad{border:2px solid var(--ink); border-radius:11px; overflow:hidden}
@@ -307,35 +109,47 @@ code{font-family:var(--mono); font-size:12px; background:var(--cream); padding:1
   letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:999px}
 .squad-hd .warn{background:#f0b6ac; color:#5e1a12}
 .squad-hd .ok{background:#bfe0ae; color:#25401d}
-.leg{display:grid; grid-template-columns:26px 1fr 1.2fr 84px; gap:7px; align-items:center;
-  padding:7px 9px; border-bottom:1px dashed #d9cbb0}
-.leg:last-child{border-bottom:0}
+.squad .leg{display:grid; grid-template-columns:26px 1fr 1.2fr 84px; gap:7px;
+  align-items:center; padding:7px 9px; border-bottom:1px dashed #d9cbb0}
+.squad .leg:last-child{border-bottom:0}
 .lnum{width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--corn);
   display:flex; align-items:center; justify-content:center; font-family:var(--sans);
   font-weight:900; font-size:11px}
 .lname{font-family:var(--sans); font-size:12px; font-weight:900; text-transform:uppercase;
   letter-spacing:.04em; overflow:hidden; text-overflow:ellipsis}
-.leg select{padding:7px; font-size:14px; font-family:var(--sans); border:2px solid var(--dirt);
-  border-radius:8px; background:#fff; color:var(--ink); width:100%}
-.leg input{width:100%; text-align:right; font-family:var(--mono); font-size:14px; padding:7px}
+.squad .leg select{padding:7px; font-size:14px; width:100%}
+.squad .leg input{width:100%; text-align:right; font-family:var(--mono); font-size:14px; padding:7px}
 @media (max-width:600px){
-  .leg{grid-template-columns:26px 1fr; grid-auto-rows:auto}
-  .leg .lnum{grid-row:span 3}
-  .leg select,.leg input{grid-column:2}
+  .squad .leg{grid-template-columns:26px 1fr; grid-auto-rows:auto}
+  .squad .leg .lnum{grid-row:span 3}
+  .squad .leg select,.squad .leg input{grid-column:2}
 }
-.evbar{display:flex; align-items:center; gap:12px; margin-bottom:14px}
-.linkish{background:none; border:0; padding:0; cursor:pointer; font-family:var(--sans);
-  font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--dirt)}
-.pill{margin-left:auto}
-.qrcard{display:flex; flex-direction:column; align-items:center}
-.qrcard .card-hd{align-self:stretch}
-.qrcard svg{border:3px solid var(--ink); border-radius:10px; box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.relayname{font-family:var(--sans); font-weight:900; font-size:13px; letter-spacing:.14em;
+  text-transform:uppercase; max-width:260px; color:var(--ink)}
+.vs{display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center;
+  padding:14px 10px; background:var(--ink); color:var(--linen); border-radius:11px}
+.vside{text-align:center; min-width:0}
+.vside .tm{font-family:var(--sans); font-size:10px; font-weight:900; letter-spacing:.14em;
+  text-transform:uppercase; opacity:.8; overflow-wrap:anywhere}
+.vside .tt{font-family:var(--mono); font-size:clamp(22px,6vw,34px); font-weight:800; line-height:1.15}
+.vside.win .tt{color:var(--corn)}
+.vmid{font-family:var(--serif); font-size:20px; font-weight:900; color:#b8412f}
 
-/* ============ deeper stats ============ */
+/* ------------------------------------------------------------ live board */
+.board{list-style:none; margin:0; padding:0}
+.board li{display:flex; align-items:center; gap:8px; padding:7px 4px;
+  border-bottom:1px dashed #d9cbb0; font-family:var(--sans)}
+.board li:last-child{border-bottom:0}
+.board li.lead{background:rgba(232,185,59,.3); border-radius:8px; padding-left:8px}
+.board .pos{width:18px; font-size:11px; font-weight:900; color:var(--dirt)}
+.board svg{width:22px; height:29px; flex:0 0 auto}
+.board b{flex:1 1 auto; font-size:14px}
+.board .t{font-family:var(--mono); font-size:13px; font-weight:800}
+
+/* ------------------------------------------------------- deeper stats */
 .clickrow{cursor:pointer}
 .clickrow:hover{background:#fdf2cf}
 .chev{color:var(--dirt); font-size:11px; margin-left:4px}
-.swatch.sm{width:14px; height:14px; border-radius:4px; border:2px solid var(--ink); display:inline-block}
 table.inner{width:100%; background:#fbf6ea}
 table.inner thead th{background:#4a3a28; font-size:9px}
 table.inner td,table.inner th{padding:6px 9px}
@@ -344,8 +158,145 @@ table.inner td,table.inner th{padding:6px 9px}
   border-bottom:1px dashed #d9cbb0; font-family:var(--sans)}
 .fame li:last-child{border-bottom:0}
 .fame li.top{background:rgba(232,185,59,.28); border-radius:8px; padding-left:8px}
-.fame .n{width:18px; font-size:11px; font-weight:900; color:var(--dirt)}
-.fame .g{flex:1 1 auto; font-size:14px; font-weight:800}
+.fame .n{width:20px; font-size:11px; font-weight:900; color:var(--dirt)}
+.fame .g{flex:1 1 auto; font-size:14px; font-weight:800; color:var(--ink)}
 .fame .g em{display:block; font-style:normal; font-size:10.5px; font-weight:600;
   color:var(--dirt); letter-spacing:.04em; text-transform:uppercase}
 .fame .t{font-family:var(--mono); font-size:15px; font-weight:800}
+
+.qrcard{display:flex; flex-direction:column; align-items:center}
+.qrcard .card-hd{align-self:stretch}
+.qrcard svg{border:3px solid var(--ink); border-radius:10px; box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.crash{font-family:var(--mono); font-size:11px; background:var(--cream);
+  border:2px solid var(--dirt); border-radius:8px; padding:10px; overflow-x:auto;
+  margin-bottom:12px; white-space:pre-wrap}
+
+/* ===================== THE RUN =====================
+   A full-screen route, not the original's modal. Everything is scoped under
+   .run-root so .run-clock / .run-sub / .run-legs cannot collide with the
+   original's lap-timer modal styles of the same name.
+
+   Deliberately breaks the parchment theme: maximum contrast for outdoors, and a
+   strong "you are in the timer now" signal. */
+.run-root{
+  position:fixed; inset:0; z-index:100;
+  display:flex; flex-direction:column;
+  background:#14100c; color:#fff8e2;
+  overscroll-behavior:none;                 /* kills pull-to-refresh mid-run */
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  padding-top:max(10px, env(safe-area-inset-top));
+  padding-bottom:max(12px, env(safe-area-inset-bottom));
+  padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+}
+.run-root .run-head{text-align:center; padding:6px 14px 2px; flex:0 0 auto}
+.run-root .run-kick{font-family:var(--sans); font-size:11px; font-weight:900;
+  letter-spacing:.22em; text-transform:uppercase; color:#a99a80}
+.run-root .run-who{font-family:var(--serif); font-size:clamp(22px,6vw,30px);
+  font-weight:900; text-transform:uppercase; letter-spacing:-.01em; line-height:1.1;
+  color:#fff8e2}
+
+/* the tap target: everything between the header and the leg strip */
+.run-root .run-body{
+  flex:1 1 auto; min-width:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:2px;
+  background:transparent; color:inherit;
+  border:4px solid #e8b93b; border-radius:18px;
+  margin:8px 10px; padding:10px;
+  touch-action:manipulation;                /* no 300ms double-tap-zoom delay */
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.run-root .run-body:active{background:rgba(232,185,59,.10)}
+.run-root .run-station{font-family:var(--serif); font-size:clamp(30px,9vw,52px);
+  font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:1;
+  text-align:center}
+.run-root .run-clock{
+  font-family:var(--mono); font-weight:800; line-height:1;
+  font-size:clamp(52px,17vw,104px); letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;        /* digits stop jittering as they change */
+  color:#ffd24a; margin:6px 0 2px; background:none; padding:0; box-shadow:none;
+}
+.run-root .run-clock-done{color:#7dff9a}
+.run-root .run-sub{font-family:var(--sans); font-size:15px; color:#a99a80; font-weight:700}
+.run-root .run-sub b{font-family:var(--mono); color:#fff8e2; font-size:17px}
+.run-root .run-cta{font-family:var(--sans); font-size:clamp(15px,4.4vw,21px);
+  font-weight:900; letter-spacing:.14em; text-transform:uppercase; color:#e8b93b;
+  margin-top:18px; text-align:center}
+.run-root .run-cta .arw{opacity:.7}
+
+.run-root .run-strip{flex:0 0 auto; display:flex; gap:5px; padding:0 10px 8px}
+.run-root .pip{flex:1 1 0; text-align:center; border-radius:9px; padding:7px 2px;
+  font-family:var(--sans); background:rgba(255,255,255,.07)}
+.run-root .pip span{display:block; font-size:11px; font-weight:900; opacity:.6}
+.run-root .pip em{display:block; font-style:normal; font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.03em; margin-top:1px}
+.run-root .pip.done{background:rgba(125,255,154,.16); color:#7dff9a}
+.run-root .pip.now{background:#e8b93b; color:#14100c}
+.run-root .pip.todo{opacity:.42}
+
+.run-root .run-legs{list-style:none; margin:14px 0 0; padding:0; text-align:left;
+  width:100%; max-width:460px}
+.run-root .run-legs li{display:flex; align-items:center; gap:10px; padding:8px 10px;
+  margin-bottom:5px; border-radius:9px; font-family:var(--sans); font-size:13.5px;
+  font-weight:800; background:rgba(255,255,255,.07)}
+.run-root .run-legs li.done{background:rgba(125,255,154,.16); color:#7dff9a}
+.run-root .run-legs .n{width:23px; height:23px; border-radius:50%;
+  background:rgba(255,255,255,.14); display:flex; align-items:center;
+  justify-content:center; font-size:11px; font-weight:900; flex:0 0 auto}
+.run-root .run-legs .g{flex:1 1 auto; text-transform:uppercase; letter-spacing:.05em}
+.run-root .run-legs .t{font-family:var(--mono); font-size:13px; font-weight:700}
+
+/* controls, kept clear of the iOS home-indicator swipe zone */
+.run-root .run-foot{flex:0 0 auto; display:flex; gap:8px; justify-content:center;
+  flex-wrap:wrap; padding:0 10px 4px}
+.run-root .rbtn{font-family:var(--sans); font-size:12.5px; font-weight:800;
+  letter-spacing:.08em; text-transform:uppercase; background:rgba(255,255,255,.10);
+  color:#fff8e2; border:2px solid rgba(255,255,255,.28); border-radius:10px;
+  padding:11px 14px; cursor:pointer}
+.run-root .rbtn-go{background:#4a7c3f; border-color:#7dff9a; color:#fff; flex:1 1 160px}
+.run-root .rbtn-x{background:rgba(143,42,31,.5); border-color:#b8412f}
+.run-root .rbtn-back{background:rgba(232,185,59,.16); border-color:#e8b93b; color:#ffd24a}
+.run-root .run-note{flex:0 0 auto; text-align:center; font-family:var(--sans);
+  font-size:11px; color:#a99a80; padding:0 16px 6px}
+
+/* Station identity in a dark table header: the validated station palette is checked
+   against the cream chart surface, so on ink it drops to ~2.4:1. The label keeps the
+   header's own colour and a swatch carries the identity instead. */
+.sthead{display:inline-flex; align-items:center; gap:6px}
+.sthead i{width:9px; height:9px; border-radius:2px; flex:0 0 auto;
+  box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+/* --dirt on corn is 4.2:1, just under AA for small text */
+.mode i{color:#4a3a28}
+/* last two AA misses: the position number on the highlighted leader row, and the
+   footer fine print */
+.board li.lead .pos{color:#4a3a28}
+footer.jingle .fine{color:#a2937a}
+
+/* Record cards set `color` so the accent bar under them (.rec::after uses
+   currentColor) matches the station or competitor. The TEXT must not inherit that --
+   a corn-gold name on white is 1.8:1. Text wears text tokens; the coloured bar
+   carries the identity. */
+.rec .w,.rec .v{color:var(--ink)}
+.rec .k,.rec .n{color:var(--dirt)}
+
+/* dirt on the 28%-gold leader row is 4.2:1, just under AA */
+.fame li.top .n,.fame li.top .g em{color:#4a3a28}
+.fame li.top .t{color:#3d2f1f !important}
+
+/* the VS bar sits on ink, so its label and team names need lifting off it */
+.vmid{color:#e8935f}
+.vside .tm{opacity:1; color:#c9b997}
+/* Station colours are validated at 3:1 as graphics, which is not enough for 12px
+   text. Same rule as everywhere else: ink label, coloured swatch. */
+.lname{color:var(--ink); display:inline-flex; align-items:center; gap:6px}
+.lname i{width:9px; height:9px; border-radius:2px; flex:0 0 auto; border:1px solid rgba(0,0,0,.25)}
+
+/* small pieces the original theme has no equivalent for */
+.rowbtn{display:flex; width:100%; align-items:center; gap:10px; background:var(--cream);
+  color:var(--ink); border:2px solid var(--ink); border-radius:10px; padding:11px;
+  margin-bottom:8px; font-family:var(--sans); text-align:left; cursor:pointer}
+.rowbtn:hover{background:var(--corn-lt)}
+.rowbtn b{flex:1 1 auto; font-size:15px}
+.rowbtn span{font-family:var(--mono); font-size:11px; color:var(--dirt)}
+.rtab.add{background:var(--field); color:#fff8e2; border-color:var(--ink)}
+.roster-list li.muted{opacity:.6; font-weight:400}
+.relayhd{margin-bottom:10px}

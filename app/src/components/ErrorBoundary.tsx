@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component<
             in the screen that crashed.
           </p>
           <pre className="crash">{String(this.state.err?.message ?? this.state.err)}</pre>
-          <button className="bigbtn" onClick={() => location.reload()}>Reload</button>
+          <button className="btn lg green" onClick={() => location.reload()}>Reload</button>
           <p className="note" style={{ marginTop: 12, textAlign: "center" }}>
             <a href="legacy/">Open the standalone scorekeeper</a>
           </p>

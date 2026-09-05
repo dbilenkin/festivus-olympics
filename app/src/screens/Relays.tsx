@@ -79,7 +79,7 @@ export default function Relays() {
             <div className="tm">{teams.B.name}</div><div className="tt">{st.B.wins}</div>
           </div>
         </div>
-        <button className="bigbtn" style={{ marginTop: 14 }} onClick={addRelay}>
+        <button className="btn lg green" style={{ marginTop: 14 }} onClick={addRelay}>
           + New relay
         </button>
       </div>
@@ -128,7 +128,8 @@ export default function Relays() {
                     {r.legs.map((gid, i) => (
                       <div className="leg" key={i}>
                         <span className="lnum">{i + 1}</span>
-                        <span className="lname" style={{ color: gColor(i) }}>
+                        <span className="lname">
+                          <i style={{ background: gColor(i) }} />
                           {games.find((g) => g.id === gid)?.name}
                         </span>
                         <select

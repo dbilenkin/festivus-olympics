@@ -54,7 +54,7 @@ export default function Pentathlon() {
     return (
       <div className="card">
         <h2>No rounds yet</h2>
-        <button className="bigbtn" onClick={() => putFacts([
+        <button className="btn lg green" onClick={() => putFacts([
           { k: K.roundExists("r1"), v: true },
           { k: K.roundLabel("r1"), v: "Round 1" },
           { k: K.roundOrd("r1"), v: 0 },
@@ -77,7 +77,7 @@ export default function Pentathlon() {
 
   return (
     <>
-      <div className="rtabs">
+      <div className="round-tabs">
         {rounds.map((r, i) => (
           <button key={r.id} className="rtab" aria-pressed={i === ri} onClick={() => setRi(i)}>
             {r.label}
@@ -109,13 +109,17 @@ export default function Pentathlon() {
         )}
 
         {wide ? (
-          <div className="tbl">
-            <table>
+          <div className="tbl-wrap">
+            <table className="entrytable">
               <thead>
                 <tr>
                   <th>Competitor</th>
                   {games.map((g, i) => (
-                    <th key={g.id} className="num" style={{ color: gColor(i) }}>{g.name}</th>
+                    <th key={g.id} className="num">
+                      <span className="sthead">
+                        <i style={{ background: gColor(i) }} />{g.name}
+                      </span>
+                    </th>
                   ))}
                   <th className="num">Total</th>
                 </tr>
