@@ -1,17 +1,6 @@
-:root{
-  --barn:#8f2a1f; --corn:#e8b93b; --corn-lt:#f6d97a; --field:#4a7c3f;
-  --cream:#f7efdd; --linen:#fffaf0; --ink:#2a2118; --dirt:#6b4c33;
-  --serif:"Hoefler Text",Georgia,"Times New Roman",serif;
-  --sans:"Helvetica Neue",Arial,sans-serif;
-  --mono:"SF Mono",Menlo,Consolas,monospace;
-}
-*{box-sizing:border-box}
-html,body,#root{margin:0;padding:0;min-height:100%}
-body{
-  font-family:var(--serif); color:var(--ink); background:var(--cream);
-  -webkit-text-size-adjust:100%;
-}
-
+/* Only what the original theme does not already cover: the run screen, sync status,
+   the phone score cards, and the two-column laptop deck. Everything else -- palette,
+   cards, tables, buttons, hero, footer -- comes from styles-original.css verbatim. */
 /* ===================== THE RUN =====================
    Deliberately breaks the parchment theme: maximum contrast for outdoors, and a
    strong "you are in the timer now" mode signal. */
@@ -334,3 +323,10 @@ code{font-family:var(--mono); font-size:12px; background:var(--cream); padding:1
   .leg .lnum{grid-row:span 3}
   .leg select,.leg input{grid-column:2}
 }
+.evbar{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.linkish{background:none; border:0; padding:0; cursor:pointer; font-family:var(--sans);
+  font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--dirt)}
+.pill{margin-left:auto}
+.qrcard{display:flex; flex-direction:column; align-items:center}
+.qrcard .card-hd{align-self:stretch}
+.qrcard svg{border:3px solid var(--ink); border-radius:10px; box-shadow:0 4px 0 rgba(0,0,0,.22)}
