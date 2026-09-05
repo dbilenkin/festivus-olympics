@@ -74,7 +74,14 @@ export function useRunClock(legs: string[], who: string, restore?: RunPersist | 
     if (t0.current && !endAt.current) raf.current = requestAnimationFrame(tick);
   }, [elapsed, marks]);
 
-  useEffect(() => { tick(); return () => cancelAnimationFrame(raf.current); }, [tick]);
+  // idx and done are dependencies even though tick does not read them: starting the
+  // clock only sets a ref (t0) and idx, neither of which changes tick's identity, so
+  // keying this on [tick] alone left the rAF loop unstarted until the first bank --
+  // the clock sat at 0:00.00 through the whole first station.
+  useEffect(() => {
+    tick();
+    return () => cancelAnimationFrame(raf.current);
+  }, [tick, idx, done]);
 
   /**
    * Advance. Called from pointerdown, not click -- that is 80-150ms earlier, which is the

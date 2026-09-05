@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -7,4 +8,9 @@ export default defineConfig({
   base: "/festivus-olympics/",
   plugins: [react()],
   build: { outDir: "dist", emptyOutDir: true },
+  test: {
+    // happy-dom implements requestAnimationFrame, which the run clock depends on
+    environment: "happy-dom",
+    environmentMatchGlobs: [["**/*.node.test.ts", "node"]],
+  },
 });

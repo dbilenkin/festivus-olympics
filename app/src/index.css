@@ -33,7 +33,10 @@ body{
 
 /* the tap target: everything between the header and the strip */
 .run-body{
-  flex:1 1 auto; width:100%; display:flex; flex-direction:column;
+  /* No width:100% here. This is a flex-column child so it already stretches, and
+     width:100% PLUS horizontal margins is 20px wider than the container -- which
+     pushed the right-hand border off the screen. */
+  flex:1 1 auto; min-width:0; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:2px;
   background:transparent; color:inherit;
   border:4px solid #e8b93b; border-radius:18px;
