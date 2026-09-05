@@ -112,17 +112,41 @@ export function useRunClock(legs: string[], who: string, restore?: RunPersist | 
     }
   }, [idx, marks, legs.length, persist]);
 
+  /**
+   * Step back one station.
+   *
+   * Popping the last mark is all it takes: splits are derived from cumulative marks, so
+   * the reopened station immediately reclaims every second since the mark before it --
+   * including the time that leaked into the station you banked prematurely. Nothing is
+   * lost or approximated.
+   *
+   * From the summary the clock is frozen, so it is un-frozen by shifting the origin
+   * forward by however long it sat there. The clock then resumes from the total it was
+   * showing rather than jumping forward by the time you spent looking at the screen.
+   */
   const undo = useCallback(() => {
-    if (done || !marks.length) return;
+    if (!marks.length) return;
+    if (endAt.current) {
+      t0.current += performance.now() - endAt.current;
+      endAt.current = 0;
+    }
     const m = marks.slice(0, -1);
-    setMarks(m); setIdx(m.length); persist(m, false);
-  }, [done, marks, persist]);
+    setMarks(m); setIdx(m.length); setDone(false); persist(m, false);
+  }, [marks, persist]);
+
+  /** Un-start a clock that was tapped by accident, before any station was banked. */
+  const restart = useCallback(() => {
+    if (marks.length) return;
+    t0.current = performance.now();
+    startedWall.current = Date.now();
+    persist([], false);
+  }, [marks.length, persist]);
 
   const reset = useCallback(() => {
     t0.current = 0; endAt.current = 0; startedWall.current = 0;
     setMarks([]); setIdx(-1); setDone(false); clearRun();
   }, []);
 
-  return { idx, marks, done, advance, undo, reset, clockEl, splitEl, elapsed,
+  return { idx, marks, done, advance, undo, restart, reset, clockEl, splitEl, elapsed,
            splits: splitsOf(marks) };
 }

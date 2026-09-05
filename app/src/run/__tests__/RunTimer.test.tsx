@@ -79,14 +79,90 @@ describe("the run clock", () => {
     expect(screen.getByText(/now running . 1 of 3/i)).toBeTruthy();
   });
 
-  it("undo reopens the previous station rather than losing it", async () => {
+  it("stepping back reopens the previous station rather than losing it", async () => {
     render(<RunTimer who="Dimitri" legs={LEGS} onSave={() => {}} onExit={() => {}} />);
     await tap();
     await frames(GUARD_MS);
     await tap();                                   // bank leg 1
     expect(screen.getByText(/now running . 2 of 3/i)).toBeTruthy();
-    await act(async () => { (screen.getByText(/undo last/i) as HTMLButtonElement).click(); });
+    await act(async () => { (screen.getByText(/back to Football/i) as HTMLButtonElement).click(); });
     expect(screen.getByText(/now running . 1 of 3/i)).toBeTruthy();
+  });
+
+  it("the button names the station you land back on", async () => {
+    render(<RunTimer who="Dimitri" legs={LEGS} onSave={() => {}} onExit={() => {}} />);
+    await tap();
+    await frames(GUARD_MS); await tap();           // now on Horseshoes
+    expect(screen.getByText(/back to Football/i)).toBeTruthy();
+    await frames(GUARD_MS); await tap();           // now on Soccer
+    expect(screen.getByText(/back to Horseshoes/i)).toBeTruthy();
+  });
+
+  /** The behaviour the whole feature exists for: a premature tap must be recoverable
+   *  with NO time lost -- the reopened station reclaims every second, including what
+   *  leaked into the station that was started by mistake. */
+  it("gives every leaked second back to the reopened station", async () => {
+    let saved: number[] | null = null;
+    render(<RunTimer who="Dimitri" legs={["A", "B"]} onSave={(x) => { saved = x; }} onExit={() => {}} />);
+    await tap();                                   // start A
+    await frames(GUARD_MS);
+    await tap();                                   // PREMATURE bank of A
+    await frames(GUARD_MS);                        // time leaks into B
+    await act(async () => { (screen.getByText(/back to A/i) as HTMLButtonElement).click(); });
+    expect(screen.getByText(/now running . 1 of 2/i)).toBeTruthy();
+
+    await frames(GUARD_MS);
+    await tap();                                   // properly bank A
+    await frames(GUARD_MS);
+    await tap();                                   // finish B
+
+    await act(async () => { (screen.getByText(/save to sheet/i) as HTMLButtonElement).click(); });
+    const [a, b] = saved!;
+    // A absorbed the premature bank plus the leak plus the rest: ~3 guard periods.
+    expect(a).toBeGreaterThan(GUARD_MS * 2.5 / 1000);
+    // B only ran after the correct bank: ~1 guard period.
+    expect(b).toBeLessThan(GUARD_MS * 2 / 1000);
+  });
+
+  it("can step back from the summary, and the clock resumes rather than jumping", async () => {
+    render(<RunTimer who="Dimitri" legs={["A", "B"]} onSave={() => {}} onExit={() => {}} />);
+    await tap();
+    await frames(GUARD_MS); await tap();
+    await frames(GUARD_MS); await tap();           // done
+    expect(screen.getByText(/run complete/i)).toBeTruthy();
+    const finished = parseFloat(clockText().split(":")[1]);
+
+    await act(async () => { (screen.getByText(/back to B/i) as HTMLButtonElement).click(); });
+    expect(screen.getByText(/now running . 2 of 2/i)).toBeTruthy();
+    // resumes from the total it was showing, not from wall-clock time spent reading it
+    const resumed = parseFloat(clockText().split(":")[1]);
+    expect(Math.abs(resumed - finished)).toBeLessThan(0.5);
+  });
+
+  it("a clock started by accident can be restarted before anything is banked", async () => {
+    render(<RunTimer who="Dimitri" legs={LEGS} onSave={() => {}} onExit={() => {}} />);
+    await tap();
+    await frames(300);
+    expect(parseFloat(clockText().split(":")[1])).toBeGreaterThan(0.1);
+    await act(async () => { (screen.getByText(/restart clock/i) as HTMLButtonElement).click(); });
+    await frames(30);
+    expect(parseFloat(clockText().split(":")[1])).toBeLessThan(0.2);
+  });
+});
+
+describe("single-station mode", () => {
+  it("one leg: start, finish, one split that is the whole total", async () => {
+    let saved: number[] | null = null;
+    render(<RunTimer who="Dimitri" legs={["Cornhole"]} onSave={(x) => { saved = x; }} onExit={() => {}} />);
+    expect(screen.getByText(/one station, one clock/i)).toBeTruthy();
+    await tap();
+    expect(screen.getByText(/tap to finish/i)).toBeTruthy();
+    await frames(GUARD_MS);
+    await tap();
+    expect(screen.getByText(/run complete/i)).toBeTruthy();
+    await act(async () => { (screen.getByText(/save to sheet/i) as HTMLButtonElement).click(); });
+    expect(saved).toHaveLength(1);
+    expect(saved![0]).toBeGreaterThan(0.3);
   });
 });
 

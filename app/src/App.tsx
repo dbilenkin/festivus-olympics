@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import RunTimer from "./run/RunTimer";
 import { loadRun, type RunPersist } from "./run/useRunClock";
 import { fmtRun } from "./lib/time";
-import { pColor, pFigure } from "./lib/palette";
+import { pColor, pFigure, gColor } from "./lib/palette";
 
 /** Preview build: roster and stations are local only. Sync and the full screens land next;
  *  the point of this build is to feel the timing interaction on a real phone. */
@@ -19,6 +19,9 @@ const loadResults = (): Result[] => {
 export default function App() {
   const [who, setWho] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  // The full pentathlon is the common case, so it stays the default. Single-station is
+  // for a re-run of one game without restarting the whole sequence.
+  const [only, setOnly] = useState<string | null>(null);
   const [resume, setResume] = useState<RunPersist | null>(null);
   const [results, setResults] = useState<Result[]>(loadResults);
 
@@ -33,11 +36,13 @@ export default function App() {
     setRunning(false);
   };
 
+  const legs = only ? [only] : STATIONS;
+
   if (running && who) {
     return (
       <RunTimer
         who={who}
-        legs={STATIONS}
+        legs={legs}
         restore={resume && resume.who === who ? resume : null}
         onSave={save}
         onExit={() => { setRunning(false); setResume(null); }}
@@ -88,14 +93,38 @@ export default function App() {
       </div>
 
       <div className="card">
-        <h2>Five stations, one clock</h2>
-        <p className="note" style={{ marginBottom: 14 }}>
-          {STATIONS.join(" → ")}. Start the clock, then tap once as each station finishes &mdash;
-          it banks that split and starts the next in the same instant. The clock never pauses,
-          so the splits always add up to the real total.
+        <h2>What are we timing?</h2>
+        <div className="modes">
+          <button className="mode" aria-pressed={!only} onClick={() => setOnly(null)}>
+            <b>All five</b><i>the full pentathlon, one clock</i>
+          </button>
+          <button className="mode" aria-pressed={!!only} onClick={() => setOnly(only ?? STATIONS[0])}>
+            <b>One station</b><i>re-run a single game</i>
+          </button>
+        </div>
+
+        {only && (
+          <div className="pickgrid" style={{ marginTop: 12 }}>
+            {STATIONS.map((st, i) => (
+              <button key={st} className="pick" aria-pressed={only === st}
+                onClick={() => setOnly(st)}>
+                <span className="swatch" style={{ background: gColor(i) }} />
+                {st}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <p className="note" style={{ margin: "14px 0" }}>
+          {only
+            ? <>Just <b>{only}</b>. Tap to start, tap to finish.</>
+            : <>{STATIONS.join(" → ")}. Start the clock, then tap once as each station
+                finishes &mdash; it banks that split and starts the next in the same
+                instant. The clock never pauses, so the splits always add up to the real
+                total.</>}
         </p>
         <button className="bigbtn" disabled={!who} onClick={() => setRunning(true)}>
-          {who ? `Start ${who}'s run` : "Pick a runner first"}
+          {who ? (only ? `Time ${who} on ${only}` : `Start ${who}'s run`) : "Pick a runner first"}
         </button>
       </div>
 

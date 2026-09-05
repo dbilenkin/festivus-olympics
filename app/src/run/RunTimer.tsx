@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function RunTimer({ who, legs, restore, onSave, onExit }: Props) {
-  const { idx, marks, done, advance, undo, reset, clockEl, splitEl, splits } =
+  const { idx, marks, done, advance, undo, restart, reset, clockEl, splitEl, splits } =
     useRunClock(legs, who, restore);
   const [sound, setSound] = useState(true);
   const prevMarks = useRef(marks.length);
@@ -83,6 +83,11 @@ export default function RunTimer({ who, legs, restore, onSave, onExit }: Props) 
           <button className="rbtn rbtn-go" onClick={() => {
             onSave(splits.map((v) => Math.round(v * 100) / 100)); clearRun();
           }}>Save to sheet</button>
+          {/* The last tap is the easiest one to fire early, so it must be walkable back
+              from here too -- the clock resumes from the total it was showing. */}
+          <button className="rbtn" onClick={undo}>
+            &#8592; Back to {legs[legs.length - 1]}
+          </button>
           <button className="rbtn" onClick={reset}>Run again</button>
           <button className="rbtn rbtn-x" onClick={() => { clearRun(); onExit(); }}>Discard</button>
         </div>
@@ -93,7 +98,9 @@ export default function RunTimer({ who, legs, restore, onSave, onExit }: Props) 
   return (
     <div className="run-root">
       <div className="run-head">
-        <div className="run-kick">{idx < 0 ? `${legs.length} stations, one clock` : `Now running · ${idx + 1} of ${legs.length}`}</div>
+        <div className="run-kick">{idx < 0
+            ? (legs.length === 1 ? "One station, one clock" : `${legs.length} stations, one clock`)
+            : `Now running · ${idx + 1} of ${legs.length}`}</div>
         <div className="run-who">{who}</div>
       </div>
 
@@ -117,7 +124,16 @@ export default function RunTimer({ who, legs, restore, onSave, onExit }: Props) 
       </div>
 
       <div className="run-foot">
-        {marks.length > 0 && <button className="rbtn" onClick={undo}>&#8630; Undo last</button>}
+        {/* Named, not "undo": it says which station you land back on, and that station
+            reclaims every second since it started -- including what leaked into this one. */}
+        {marks.length > 0 && (
+          <button className="rbtn rbtn-back" onClick={undo}>
+            &#8592; Back to {legs[marks.length - 1]}
+          </button>
+        )}
+        {idx === 0 && marks.length === 0 && (
+          <button className="rbtn" onClick={restart}>&#8630; Restart clock</button>
+        )}
         <button className="rbtn" onClick={() => setSound((s) => !s)}>{sound ? "Sound on" : "Sound off"}</button>
         <button className="rbtn rbtn-x" onClick={() => {
           if (!marks.length || confirm("Throw this run away?")) { clearRun(); onExit(); }
