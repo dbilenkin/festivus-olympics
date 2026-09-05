@@ -25,3 +25,6 @@ Festivus Olympics*.csv
 
 # unreferenced 4MB image, dead weight in every Pages deploy
 Gemini_Generated_Image_*.jpeg
+
+# cdk deploy artifact (regenerated every deploy)
+infra/cdk-outputs.json

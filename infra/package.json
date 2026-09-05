@@ -1,0 +1,15 @@
+{
+  "name": "pondneck-infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CDK app for the Pond Neck Olympics backend (DynamoDB + Lambda + HTTP API)",
+  "bin": { "pondneck": "bin/pondneck.js" },
+  "scripts": {
+    "ls": "cdk ls",
+    "synth": "cdk synth PondNeckStack",
+    "diff": "cdk diff PondNeckStack",
+    "deploy": "cdk deploy PondNeckStack --require-approval broadening --outputs-file ./cdk-outputs.json"
+  },
+  "devDependencies": { "aws-cdk": "^2.1128.0" },
+  "dependencies": { "aws-cdk-lib": "^2.220.0", "constructs": "^10.4.2" }
+}
