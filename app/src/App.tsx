@@ -1,152 +1,84 @@
-import { useEffect, useState } from "react";
-import RunTimer from "./run/RunTimer";
-import { loadRun, type RunPersist } from "./run/useRunClock";
-import { fmtRun } from "./lib/time";
-import { pColor, pFigure, gColor } from "./lib/palette";
+import { useEffect } from "react";
+import { useRoute, go, remember } from "./router";
+import { useStore, startSync } from "./sync/store";
+import Landing from "./screens/Landing";
+import Pentathlon from "./screens/Pentathlon";
+import Standings from "./screens/Standings";
+import SyncPill from "./components/SyncPill";
 
-/** Preview build: roster and stations are local only. Sync and the full screens land next;
- *  the point of this build is to feel the timing interaction on a real phone. */
-const ROSTER = ["Andy", "Chris", "Sachin", "Joe", "Gerard", "Malav", "Dimitri", "Pete"];
-const STATIONS = ["Football", "Horseshoes", "Soccer", "Cornhole", "Basketball"];
-const RESULTS_KEY = "pondneck.preview.results.v1";
-
-interface Result { who: string; splits: number[]; total: number; at: number }
-
-const loadResults = (): Result[] => {
-  try { return JSON.parse(localStorage.getItem(RESULTS_KEY) || "[]"); } catch { return []; }
-};
+const TABS = [
+  { id: "pent", label: "Pentathlon" },
+  { id: "stand", label: "Standings" },
+  { id: "share", label: "Share" },
+];
 
 export default function App() {
-  const [who, setWho] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-  // The full pentathlon is the common case, so it stays the default. Single-station is
-  // for a re-run of one game without restarting the whole sequence.
-  const [only, setOnly] = useState<string | null>(null);
-  const [resume, setResume] = useState<RunPersist | null>(null);
-  const [results, setResults] = useState<Result[]>(loadResults);
+  const { eventId, panel } = useRoute();
+  const openId = useStore((s) => s.eventId);
+  const name = useStore((s) => s.name);
+  const conflicts = useStore((s) => s.conflicts);
 
-  // An interrupted run is offered back rather than silently lost.
-  useEffect(() => { setResume(loadRun()); }, []);
+  useEffect(() => {
+    if (eventId && eventId !== openId) useStore.getState().open(eventId);
+    if (!eventId && openId) useStore.getState().close();
+  }, [eventId, openId]);
 
-  const save = (splits: number[]) => {
-    const total = splits.reduce((a, b) => a + b, 0);
-    const next = [{ who: who ?? "Runner", splits, total, at: Date.now() }, ...results].slice(0, 25);
-    setResults(next);
-    try { localStorage.setItem(RESULTS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-    setRunning(false);
-  };
+  useEffect(() => { if (eventId && name) remember(eventId, name); }, [eventId, name]);
+  useEffect(() => startSync(), []);
 
-  const legs = only ? [only] : STATIONS;
+  if (!eventId) return <Landing />;
 
-  if (running && who) {
-    return (
-      <RunTimer
-        who={who}
-        legs={legs}
-        restore={resume && resume.who === who ? resume : null}
-        onSave={save}
-        onExit={() => { setRunning(false); setResume(null); }}
-      />
-    );
-  }
+  const link = `${location.origin}${location.pathname}#/e/${eventId}/pent`;
 
   return (
     <div className="wrap">
-      <div className="hero-lite">
-        <h1>Pond Neck<br />Olympics</h1>
-        <p>Timer preview</p>
-      </div>
-
-      {resume && (
-        <div className="card" style={{ borderColor: "var(--barn)" }}>
-          <h2>Unfinished run</h2>
-          <p className="note" style={{ marginBottom: 12 }}>
-            <b>{resume.who}</b> &mdash; {resume.marks.length} of {resume.legs.length} banked,
-            started {Math.round((Date.now() - resume.startedWall) / 1000)}s ago.
-            The clock has kept running.
-          </p>
-          <button className="bigbtn" onClick={() => { setWho(resume.who); setRunning(true); }}>
-            Pick it back up
-          </button>
-          <button className="bigbtn" style={{ background: "var(--barn)", marginTop: 8 }}
-            onClick={() => { localStorage.removeItem("pondneck.run.v2"); setResume(null); }}>
-            Throw it away
-          </button>
+      <header className="apphead">
+        <div>
+          <div className="ev">{name || "Pond Neck Olympics"}</div>
+          <button className="linkish" onClick={() => go(null, "home")}>← all events</button>
         </div>
-      )}
+        <SyncPill />
+      </header>
 
-      <div className="card">
-        <h2>Who is running?</h2>
-        <div className="pickgrid">
-          {ROSTER.map((n, i) => {
-            const id = `p${i + 1}`;
-            return (
-              <button key={n} className="pick" aria-pressed={who === n} onClick={() => setWho(n)}>
-                <svg viewBox="0 0 60 80" style={{ color: pColor(id) }}>
-                  <use href={`#${pFigure(id)}`} width="60" height="80" />
-                </svg>
-                {n}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <nav className="tabs">
+        {TABS.map((t) => (
+          <button key={t.id} className="tab" aria-pressed={panel === t.id}
+            onClick={() => go(eventId, t.id)}>{t.label}</button>
+        ))}
+      </nav>
 
-      <div className="card">
-        <h2>What are we timing?</h2>
-        <div className="modes">
-          <button className="mode" aria-pressed={!only} onClick={() => setOnly(null)}>
-            <b>All five</b><i>the full pentathlon, one clock</i>
-          </button>
-          <button className="mode" aria-pressed={!!only} onClick={() => setOnly(only ?? STATIONS[0])}>
-            <b>One station</b><i>re-run a single game</i>
-          </button>
-        </div>
-
-        {only && (
-          <div className="pickgrid" style={{ marginTop: 12 }}>
-            {STATIONS.map((st, i) => (
-              <button key={st} className="pick" aria-pressed={only === st}
-                onClick={() => setOnly(st)}>
-                <span className="swatch" style={{ background: gColor(i) }} />
-                {st}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <p className="note" style={{ margin: "14px 0" }}>
-          {only
-            ? <>Just <b>{only}</b>. Tap to start, tap to finish.</>
-            : <>{STATIONS.join(" → ")}. Start the clock, then tap once as each station
-                finishes &mdash; it banks that split and starts the next in the same
-                instant. The clock never pauses, so the splits always add up to the real
-                total.</>}
-        </p>
-        <button className="bigbtn" disabled={!who} onClick={() => setRunning(true)}>
-          {who ? (only ? `Time ${who} on ${only}` : `Start ${who}'s run`) : "Pick a runner first"}
-        </button>
-      </div>
-
-      {results.length > 0 && (
-        <div className="card">
-          <h2>Saved runs (this phone)</h2>
-          {results.map((r, i) => (
-            <div className="res" key={i}>
-              <b>{r.who}</b>
-              <span style={{ color: "var(--dirt)" }}>{r.splits.map((s) => s.toFixed(1)).join(" · ")}</span>
-              <span>{fmtRun(r.total)}</span>
-            </div>
+      {conflicts.length > 0 && (
+        <div className="card conflict">
+          <h2>Someone else got there first</h2>
+          {conflicts.slice(0, 4).map((c) => (
+            <p className="note" key={c.k}>
+              <code>{c.k.replace(/^score\./, "")}</code> — your {String(c.mine)} was
+              replaced by {String(c.theirs)}.
+            </p>
           ))}
-          <p className="note" style={{ marginTop: 12 }}>
-            Saved on this device only &mdash; shared sync is the next piece.
-          </p>
+          <button className="rowbtn" onClick={() => useStore.getState().dismissConflicts()}>
+            Got it
+          </button>
         </div>
       )}
 
-      <p className="note" style={{ textAlign: "center" }}>
-        Your real scorekeeper, untouched: <a href="legacy/">open it here</a>
-      </p>
+      {panel === "pent" && <Pentathlon />}
+      {panel === "stand" && <Standings />}
+      {panel === "share" && (
+        <div className="card">
+          <h2>Share this event</h2>
+          <p className="note" style={{ marginBottom: 12 }}>
+            Anyone with this link can see the scores and enter times. There is no login,
+            so treat the link as the key.
+          </p>
+          <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+          <button className="bigbtn" style={{ marginTop: 10 }}
+            onClick={() => navigator.clipboard?.writeText(link)}>Copy link</button>
+          <p className="note" style={{ marginTop: 14 }}>
+            Event id <code>{eventId}</code>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
