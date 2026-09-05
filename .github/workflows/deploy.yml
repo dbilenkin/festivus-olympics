@@ -30,6 +30,10 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
       - run: npm ci
+      # The scoring suite asserts the 2025 spreadsheet numbers exactly. If a refactor
+      # changes any of them, the deploy stops here rather than shipping wrong standings.
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
