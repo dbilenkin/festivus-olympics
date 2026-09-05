@@ -1,49 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useStore, putFacts, putFact } from "../sync/store";
 import { K } from "../sync/facts";
 import { parseTime, fmtClock } from "../lib/time";
 import { roundTotal, rankBy } from "../lib/scoring";
 import { pColor, pFigure, gColor } from "../lib/palette";
 import { useWide } from "../lib/useMedia";
+import LiveInput from "../components/LiveInput";
 import RunTimer from "../run/RunTimer";
 import { loadRun, type RunPersist } from "../run/useRunClock";
 
-/**
- * Saves as you type (debounced), not on blur.
- *
- * On a phone, blur is not guaranteed: you can type a time and then lock the screen,
- * switch apps or have the keyboard dismissed without the field ever losing focus, and
- * a blur-only save loses the number silently. The store collapses repeated writes to
- * the same key, so typing "12.34" still costs one request.
- */
+/** A score cell: seconds, or m:ss, or blank to clear. */
 function ScoreCell({ value, onCommit }: { value: number | null; onCommit: (v: number | null) => void }) {
-  const [text, setText] = useState(value == null ? "" : String(value));
-  const dirty = useRef(false);
-  const timer = useRef<number | undefined>(undefined);
-
-  // Adopt an incoming value from another device, but never over something being typed.
-  useEffect(() => {
-    if (!dirty.current) setText(value == null ? "" : String(value));
-  }, [value]);
-
-  const commit = (raw: string) => {
-    const parsed = parseTime(raw);
-    if (parsed !== value) onCommit(parsed);
-    dirty.current = false;
-  };
-
   return (
-    <input
+    <LiveInput<number | null>
       inputMode="decimal"
-      value={text}
-      onChange={(e) => {
-        const raw = e.target.value;
-        setText(raw);
-        dirty.current = true;
-        window.clearTimeout(timer.current);
-        timer.current = window.setTimeout(() => commit(raw), 500);
-      }}
-      onBlur={(e) => { window.clearTimeout(timer.current); commit(e.target.value); }}
+      value={value}
+      format={(v) => (v == null ? "" : String(v))}
+      parse={parseTime}
+      onCommit={onCommit}
     />
   );
 }

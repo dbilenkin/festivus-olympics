@@ -4,12 +4,19 @@ import { useStore, startSync } from "./sync/store";
 import Landing from "./screens/Landing";
 import Pentathlon from "./screens/Pentathlon";
 import Standings from "./screens/Standings";
+import Roster from "./screens/Roster";
+import Draw from "./screens/Draw";
+import Relays from "./screens/Relays";
 import SyncPill from "./components/SyncPill";
 import QR from "./components/QR";
 import LiveBoard from "./components/LiveBoard";
 import { useWide } from "./lib/useMedia";
 
+/** Order follows the day: set up, draw, run the team event, then the individual one. */
 const TABS = [
+  { id: "roster", label: "Roster" },
+  { id: "draw", label: "Draw" },
+  { id: "relay", label: "Relays" },
   { id: "pent", label: "Pentathlon" },
   { id: "stand", label: "Standings" },
   { id: "share", label: "Share" },
@@ -106,6 +113,9 @@ export default function App() {
           ? <div className="deck"><div><Pentathlon /></div><LiveBoard /></div>
           : <Pentathlon />
       )}
+      {panel === "roster" && <Roster />}
+      {panel === "draw" && <Draw />}
+      {panel === "relay" && <Relays />}
       {panel === "stand" && <Standings />}
       {panel === "share" && <Share eventId={eventId} link={link} />}
     </div>
