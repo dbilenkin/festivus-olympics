@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { project, legacyToFacts, merge, beats, K, KEY_GRAMMAR } from "../facts";
 import type { Fact, FactMap } from "../facts";
-import { individualResults } from "../../lib/scoring";
+import { individualResults, roundTotal, stationBreakdown } from "../../lib/scoring";
 import { fixture, EXPECTED, IDS } from "../../lib/__tests__/fixture";
 import type { EventState } from "../../domain/types";
 
@@ -138,5 +138,43 @@ describe("projection is defensive about missing facts", () => {
       { k: K.roundExists("r1"), v: true, ts: 1 },
     ]);
     expect(project(m).rounds[0].scores.c1!.g1).toBeNull();
+  });
+});
+
+describe("rounds recorded as a total only", () => {
+  it("counts towards standings even with no station splits", () => {
+    const m = toMap([
+      { k: K.playerName("c1"), v: "Andy", ts: 1 },
+      ...["g1", "g2"].map((g) => ({ k: K.gameName(g), v: g, ts: 1 })),
+      { k: K.roundExists("r1"), v: true, ts: 1 },
+      { k: K.roundTotal("r1", "c1"), v: 155, ts: 1 },
+    ]);
+    const s = project(m);
+    expect(roundTotal(s.rounds[0], "c1", s.games)).toBe(155);
+  });
+
+  it("real station splits win over a recorded total", () => {
+    const m = toMap([
+      { k: K.playerName("c1"), v: "Andy", ts: 1 },
+      ...["g1", "g2"].map((g) => ({ k: K.gameName(g), v: g, ts: 1 })),
+      { k: K.roundExists("r1"), v: true, ts: 1 },
+      { k: K.score("r1", "c1", "g1"), v: 10, ts: 1 },
+      { k: K.score("r1", "c1", "g2"), v: 20, ts: 1 },
+      { k: K.roundTotal("r1", "c1"), v: 999, ts: 1 },
+    ]);
+    const s = project(m);
+    expect(roundTotal(s.rounds[0], "c1", s.games)).toBe(30);
+  });
+
+  it("contributes nothing station-level, because no station time exists", () => {
+    const m = toMap([
+      { k: K.playerName("c1"), v: "Andy", ts: 1 },
+      { k: K.gameName("g1"), v: "Football", ts: 1 },
+      { k: K.roundExists("r1"), v: true, ts: 1 },
+      { k: K.roundTotal("r1", "c1"), v: 155, ts: 1 },
+    ]);
+    const s = project(m);
+    expect(individualResults(s)[0].perGameBest.g1).toBeNull();
+    expect(stationBreakdown(s)[0].field.n).toBe(0);
   });
 });

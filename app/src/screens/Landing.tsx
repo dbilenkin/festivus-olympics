@@ -73,6 +73,20 @@ export default function Landing() {
         <p>Five games · eight souls · two teams</p>
       </div>
 
+      {list.length > 1 && (
+        <div className="card corn">
+          <div className="card-hd"><h3>All time</h3>
+            <span className="sub">{list.length} events on this device</span></div>
+          <p className="note" style={{ marginBottom: 12 }}>
+            Career averages, the roll of honour, year-on-year form and all-time station
+            records across every event this device knows about.
+          </p>
+          <button className="btn lg green" onClick={() => go(null, "all")}>
+            Open the all-time board
+          </button>
+        </div>
+      )}
+
       {list.length > 0 && (
         <div className="card">
           <h2>On this device</h2>

@@ -14,6 +14,7 @@ import SyncPill from "./components/SyncPill";
 import LiveBoard from "./components/LiveBoard";
 import QR from "./components/QR";
 import { Hero, Jingle } from "./theme/Chrome";
+import AllTime from "./screens/AllTime";
 
 /** Order follows the day: set up, draw, run the team event, then the individual one. */
 const TABS = [
@@ -101,7 +102,7 @@ export default function App() {
       )}
 
       <main className="wrap">
-        {!eventId ? <Landing /> : (
+        {!eventId ? (panel === "all" ? <AllTime /> : <Landing />) : (
           <>
             <div className="evbar">
               <button className="linkish" onClick={() => go(null, "home")}>&larr; all events</button>

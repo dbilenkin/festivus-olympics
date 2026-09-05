@@ -35,6 +35,7 @@ export const K = {
   roundLabel: (r: RoundId) => `round.${r}.label`,
   roundOrd: (r: RoundId) => `round.${r}.ord`,
   score: (r: RoundId, p: PlayerId, g: GameId) => `score.${r}.${p}.${g}`,
+  roundTotal: (r: RoundId, p: PlayerId) => `round.${r}.total.${p}`,
   relayExists: (y: RelayId) => `relay.${y}.exists`,
   relayLabel: (y: RelayId) => `relay.${y}.label`,
   relayOrd: (y: RelayId) => `relay.${y}.ord`,
@@ -120,7 +121,9 @@ export function project(facts: FactMap): EventState {
       for (const g of games) row[g.id] = num(facts[K.score(rid, p.id, g.id)]?.v);
       scores[p.id] = row;
     }
-    return { id: rid, label: str(facts[K.roundLabel(rid)]?.v, `Round ${i + 1}`), scores };
+    const totals: Record<PlayerId, number | null> = {};
+    for (const p of players) totals[p.id] = num(facts[K.roundTotal(rid, p.id)]?.v);
+    return { id: rid, label: str(facts[K.roundLabel(rid)]?.v, `Round ${i + 1}`), scores, totals };
   });
 
   const relayIds = [...new Set(byPrefix("relay.").map((k) => k.split(".")[1]))]

@@ -229,3 +229,74 @@ export function fameAndShame(state: EventState): { fastest: string; slowest: str
 }
 
 export type { GameId, PlayerId };
+
+/* ------------------------------------------------------------------ all time */
+/**
+ * A slope chart: each competitor's average in every event, joined up. With two years
+ * the line direction IS the answer -- down and to the right means they got better.
+ */
+export function chartCareerSlope(
+  events: { id: string; name: string }[],
+  career: { name: string; perEvent: { id: string; avg: number | null }[] }[],
+): string {
+  const rows = career.filter((c) => c.perEvent.some((e) => e.avg != null));
+  if (!rows.length || events.length < 2) return "";
+
+  const W = Math.max(700, 200 + events.length * 220);
+  const PADL = 70, PADR = 130, PADT = 26, PADB = 46, H = 400;
+  const all = rows.flatMap((r) => r.perEvent.map((e) => e.avg)).filter((v): v is number => v != null);
+  const max = niceMax(Math.max(...all));
+  const x = (i: number) => PADL + (events.length === 1 ? 0 : i * (W - PADL - PADR) / (events.length - 1));
+  const y = (v: number) => H - PADB - (v / max) * (H - PADT - PADB);
+
+  let g = "";
+  for (let i = 0; i <= 5; i++) {
+    const v = max * i / 5;
+    g += `<line class="grid-l" x1="${PADL}" y1="${y(v)}" x2="${W - PADR + 20}" y2="${y(v)}"/>`
+       + `<text class="lbl sm" x="${PADL - 8}" y="${y(v) + 4}" text-anchor="end">${fmtShort(v)}</text>`;
+  }
+  events.forEach((e, i) => {
+    // the first and last labels sit on the axis ends, so centring them runs them off
+    // the edge of the viewBox -- anchor them inward instead
+    const anchor = i === 0 ? "start" : i === events.length - 1 ? "end" : "middle";
+    g += `<text class="lbl" x="${x(i)}" y="${H - PADB + 22}" text-anchor="${anchor}">${esc(e.name)}</text>`;
+  });
+
+  const ends: { name: string; c: string; x: number; y: number; ly: number }[] = [];
+  for (const r of rows) {
+    const pts = events
+      .map((e, i) => {
+        const hit = r.perEvent.find((p) => p.id === e.id);
+        return hit?.avg != null ? ([x(i), y(hit.avg)] as [number, number]) : null;
+      })
+      .filter((p): p is [number, number] => p !== null);
+    if (!pts.length) continue;
+    const c = pColor("p" + (rows.indexOf(r) + 1));
+    if (pts.length > 1) {
+      g += `<polyline points="${pts.map((p) => p.join(",")).join(" ")}" fill="none" `
+         + `stroke="${c}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+    for (const p of pts) {
+      g += `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${c}" stroke="#2a2118" stroke-width="1.5"/>`;
+    }
+    const last = pts[pts.length - 1];
+    ends.push({ name: r.name, c, x: last[0], y: last[1], ly: last[1] });
+  }
+
+  ends.sort((a, b) => a.ly - b.ly);
+  for (let i = 1; i < ends.length; i++) {
+    if (ends[i].ly - ends[i - 1].ly < 15) ends[i].ly = ends[i - 1].ly + 15;
+  }
+  const over = ends.length ? ends[ends.length - 1].ly - (H - PADB) : 0;
+  if (over > 0) for (const e of ends) e.ly -= over;
+  for (const e of ends) {
+    if (Math.abs(e.ly - e.y) > 2) {
+      g += `<path d="M${e.x + 6} ${e.y} L${e.x + 13} ${e.ly}" stroke="${e.c}" stroke-width="1.4" fill="none" opacity=".65"/>`;
+    }
+    g += `<text class="lbl" x="${e.x + 16}" y="${e.ly + 4}" style="fill:${e.c}">${esc(e.name)}</text>`;
+  }
+  g += `<line class="axis-l" x1="${PADL}" y1="${PADT}" x2="${PADL}" y2="${H - PADB}"/>`
+     + `<line class="axis-l" x1="${PADL}" y1="${H - PADB}" x2="${W - PADR + 20}" y2="${H - PADB}"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${W}px;height:auto">${g}</svg>`
+    + `<div class="legend"><span>Average pentathlon per event. Downhill is improvement.</span></div>`;
+}

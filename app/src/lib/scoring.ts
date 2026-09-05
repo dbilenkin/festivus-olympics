@@ -37,12 +37,18 @@ export function rankBy(rows: Ranked[], lowerIsBetter: boolean): Map<string, numb
 export function roundTotal(round: Round, pid: PlayerId, games: { id: GameId }[]): number | null {
   const sc = round.scores?.[pid] ?? {};
   let sum = 0;
+  let complete = games.length > 0;
   for (const g of games) {
     const v = sc[g.id];
-    if (v == null || !isFinite(v)) return null;
+    if (v == null || !isFinite(v)) { complete = false; break; }
     sum += v;
   }
-  return sum;
+  if (complete) return sum;
+  // Fall back to a total recorded without splits. Such a round counts towards
+  // averages and standings, but contributes nothing station-level -- which is
+  // correct, because no station time was ever written down.
+  const t = round.totals?.[pid];
+  return t != null && isFinite(t) ? t : null;
 }
 
 export interface IndividualRow {

@@ -18,6 +18,13 @@ export interface Round {
   id: RoundId;
   label: string;
   scores: Record<PlayerId, Record<GameId, number | null | undefined> | undefined>;
+  /**
+   * A total recorded WITHOUT station splits. Some rounds only ever existed as a final
+   * time -- 2025's first two pentathlons were kept that way. Storing the total lets
+   * those rounds count towards averages and standings while staying correctly absent
+   * from anything station-level.
+   */
+  totals?: Record<PlayerId, number | null>;
 }
 
 export interface RelayEntry {
