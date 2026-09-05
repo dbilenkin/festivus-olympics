@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createEvent, fetchEvent } from "../sync/client";
+import { useEffect, useState } from "react";
+import { createEvent, fetchEvent, listEvents } from "../sync/client";
 import { go, recents, remember } from "../router";
 import { putFacts, useStore } from "../sync/store";
 import { K } from "../sync/facts";
@@ -22,7 +22,20 @@ export default function Landing() {
   const [join, setJoin] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const list = recents();
+  // The server is the source of truth for which events exist. The local list is only
+  // a fallback so the home screen still works with no signal.
+  const [list, setList] = useState<{ id: string; name: string }[]>(
+    () => recents().map((r) => ({ id: r.id, name: r.name })));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let live = true;
+    listEvents()
+      .then((r) => { if (live && r.events) setList(r.events.map((e) => ({ id: e.eventId, name: e.name }))); })
+      .catch(() => { /* offline: keep the cached list */ })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; };
+  }, []);
 
   async function create() {
     setBusy("create"); setErr(null);
@@ -76,10 +89,10 @@ export default function Landing() {
       {list.length > 0 && (
         <div className="card corn">
           <div className="card-hd"><h3>All time</h3>
-            <span className="sub">{list.length} event{list.length === 1 ? "" : "s"} on this device</span></div>
+            <span className="sub">every year, all in one place</span></div>
           <p className="note" style={{ marginBottom: 12 }}>
             Career averages, the roll of honour, year-on-year form and all-time station
-            records across every event this device knows about.
+            records, across every event on the server.
           </p>
           <button className="btn lg green" onClick={() => go(null, "all")}>
             Open the all-time board
@@ -87,16 +100,18 @@ export default function Landing() {
         </div>
       )}
 
-      {list.length > 0 && (
-        <div className="card">
-          <h2>On this device</h2>
-          {list.map((r) => (
-            <button key={r.id} className="rowbtn" onClick={() => go(r.id, "pent")}>
-              <b>{r.name || r.id}</b><span>{r.id}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="card">
+        <div className="card-hd"><h3>Events</h3>
+          <span className="sub">{loading ? "loading…" : `${list.length} on the server`}</span></div>
+        {list.length === 0 && !loading && (
+          <p className="note">No events yet. Start one below.</p>
+        )}
+        {list.map((r) => (
+          <button key={r.id} className="rowbtn" onClick={() => go(r.id, "pent")}>
+            <b>{r.name || r.id}</b><span>{r.id}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="card">
         <h2>Join an event</h2>

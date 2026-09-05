@@ -75,11 +75,15 @@ const rand = (n) => {
 
 /* ------------------------------------------------------------------ storage */
 const metaKey = (id) => ({ pk: `EVT#${id}`, sk: "META" });
+// A single "EVENTS" partition indexes every event, so listing is one Query. The role
+// deliberately has no dynamodb:Scan, and this is why it does not need one.
+const INDEX_PK = "EVENTS";
+const SNAP_EVERY_MS = 5 * 60 * 1000;
 
 async function readMeta(id) {
   const r = await ddb.send(new GetCommand({
     TableName: TABLE, Key: metaKey(id),
-    ProjectionExpression: "ver, #n, createdAt",
+    ProjectionExpression: "ver, #n, createdAt, lastSnapAt",
     ExpressionAttributeNames: { "#n": "name" },
   }));
   return r.Item || null;
@@ -144,6 +148,29 @@ function parseBody(event) {
   }
 }
 
+/** Copy the whole event to a dated row, at most once every SNAP_EVERY_MS. */
+async function maybeSnapshot(id, meta, now) {
+  try {
+    if (meta.lastSnapAt && now - meta.lastSnapAt < SNAP_EVERY_MS) return;
+    const facts = await readFacts(id);
+    const takenAt = new Date(now).toISOString();
+    await ddb.send(new PutCommand({
+      TableName: TABLE,
+      Item: {
+        pk: `EVT#${id}`, sk: `SNAP#${takenAt}`,
+        takenAt: now, factCount: Object.keys(facts).length, facts,
+      },
+    }));
+    await ddb.send(new UpdateCommand({
+      TableName: TABLE, Key: metaKey(id),
+      UpdateExpression: "SET lastSnapAt = :t",
+      ExpressionAttributeValues: { ":t": now },
+    }));
+  } catch (e) {
+    console.warn("snapshot skipped", e?.message);   // never fail a write over a backup
+  }
+}
+
 /* ------------------------------------------------------------------ handler */
 export const handler = async (event) => {
   const now = Date.now();
@@ -167,7 +194,25 @@ export const handler = async (event) => {
         Item: { ...metaKey(eventId), ver: 1, name, createdAt: now },
         ConditionExpression: "attribute_not_exists(pk)",
       }));
+      await ddb.send(new PutCommand({
+        TableName: TABLE,
+        Item: { pk: INDEX_PK, sk: `EVT#${eventId}`, eventId, name, createdAt: now },
+      }));
       return json(201, { eventId, ver: 1, name, serverNow: now });
+    }
+
+    // List every event. This is what makes the home screen work without the browser
+    // having to remember anything -- see the note on discoverability in the README.
+    if (method === "GET" && path === "/events") {
+      const r = await ddb.send(new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: "pk = :pk",
+        ExpressionAttributeValues: { ":pk": INDEX_PK },
+      }));
+      const events = (r.Items || [])
+        .map((i) => ({ eventId: i.eventId, name: i.name, createdAt: i.createdAt }))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      return json(200, { events, serverNow: now });
     }
 
     if (method === "GET" && seg[0] === "events" && seg.length === 2) {
@@ -228,7 +273,56 @@ export const handler = async (event) => {
         const all = await readFacts(id);
         conflicts = rejectedKeys.map((k) => ({ k, ...(all[k] || {}) }));
       }
+      // Wide-open writes need an undo. Every few minutes the whole event is copied to
+      // a snapshot row, so vandalism or a bad import is a restore rather than a loss.
+      if (applied > 0) await maybeSnapshot(id, meta, now);
+
       return json(200, { ver, serverNow: now, applied, rejected: rejectedKeys.length, conflicts });
+    }
+
+    /* GET /events/{id}/snapshots ------------------------------------------ */
+    if (method === "GET" && seg[0] === "events" && seg[2] === "snapshots" && seg.length === 3) {
+      const id = seg[1];
+      if (!EVENT_ID.test(id)) return bad("bad event id");
+      const r = await ddb.send(new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :p)",
+        ExpressionAttributeValues: { ":pk": `EVT#${id}`, ":p": "SNAP#" },
+        ProjectionExpression: "sk, takenAt, factCount",
+        ScanIndexForward: false,
+      }));
+      return json(200, {
+        serverNow: now,
+        snapshots: (r.Items || []).map((i) => ({
+          id: i.sk.slice(5), takenAt: i.takenAt, factCount: i.factCount,
+        })),
+      });
+    }
+
+    /* POST /events/{id}/restore ------------------------------------------- */
+    if (method === "POST" && seg[0] === "events" && seg[2] === "restore" && seg.length === 3) {
+      const id = seg[1];
+      if (!EVENT_ID.test(id)) return bad("bad event id");
+      const body = parseBody(event);
+      if (typeof body === "string") return bad(body);
+      const snapId = String(body.snapshotId || "");
+      if (!/^[0-9TZ:.\-]{10,40}$/.test(snapId)) return bad("bad snapshot id");
+
+      const snap = await ddb.send(new GetCommand({
+        TableName: TABLE, Key: { pk: `EVT#${id}`, sk: `SNAP#${snapId}` },
+      }));
+      if (!snap.Item) return bad("no such snapshot", 404);
+
+      // Restoring is itself a normal write: every fact goes back with a fresh
+      // timestamp, so it propagates to every device by the usual sync path.
+      const facts = snap.Item.facts || {};
+      const entries = Object.entries(facts);
+      await Promise.all(entries.map(([k, f]) =>
+        putFact(id, k, f.v, now, "restore")));
+      const up = await bumpVersion(id);
+      return json(200, {
+        ver: up.Attributes?.ver, serverNow: now, restored: entries.length, from: snapId,
+      });
     }
 
     return bad("not found", 404);

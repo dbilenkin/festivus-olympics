@@ -80,4 +80,18 @@ export const pushFacts = (id: string, facts: Fact[]) =>
     method: "POST", body: JSON.stringify({ by: deviceId(), facts }),
   });
 
+/** The event list lives on the server, so any device shows every event without
+ *  having to have visited it before. */
+export const listEvents = () =>
+  req<{ events: { eventId: string; name: string; createdAt: number }[] }>("/events");
+
+export const listSnapshots = (id: string) =>
+  req<{ snapshots: { id: string; takenAt: number; factCount: number }[] }>(
+    `/events/${encodeURIComponent(id)}/snapshots`);
+
+export const restoreSnapshot = (id: string, snapshotId: string) =>
+  req<{ ver: number; restored: number; from: string }>(
+    `/events/${encodeURIComponent(id)}/restore`,
+    { method: "POST", body: JSON.stringify({ snapshotId }) });
+
 export const MAX_BATCH = 200;

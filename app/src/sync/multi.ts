@@ -3,7 +3,7 @@
  *  Competitors are matched by NAME, not id. Ids are only unique within an event -- p7
  *  is Dimitri in one year and could be anyone in the next -- so joining on them would
  *  silently merge two different people's careers. */
-import { fetchEvent } from "./client";
+import { fetchEvent, listEvents } from "./client";
 import { project } from "./facts";
 import type { EventState } from "../domain/types";
 import { individualResults, roundTotal } from "../lib/scoring";
@@ -28,6 +28,17 @@ export function chronological(events: LoadedEvent[]): LoadedEvent[] {
     if (yb != null) return 1;
     return 0;
   });
+}
+
+/** Ask the server which events exist. Falls back to whatever this device has opened
+ *  before, so the all-time board still works with no signal. */
+export async function loadAllEvents(fallbackIds: string[]): Promise<LoadedEvent[]> {
+  let ids = fallbackIds;
+  try {
+    const r = await listEvents();
+    if (r.events?.length) ids = r.events.map((e) => e.eventId);
+  } catch { /* offline: use what this device has cached */ }
+  return loadEvents(ids);
 }
 
 export async function loadEvents(ids: string[]): Promise<LoadedEvent[]> {
