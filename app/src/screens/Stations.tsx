@@ -1,6 +1,7 @@
 import { useStore } from "../sync/store";
 import { individualResults } from "../lib/scoring";
 import { ctxOf, chartStationRange, chartStationPie, chartStationSmalls } from "../charts/charts";
+import { chartForm } from "../charts/extra";
 
 function Card({ title, sub, svg }: { title: string; sub: string; svg: string }) {
   if (!svg) return null;
@@ -46,6 +47,9 @@ export default function Stations() {
       <Card title="Share of the Day"
         sub="Total clock time each station has swallowed — every pentathlon run and every relay leg added together."
         svg={p2} />
+      <Card title="Who Is Good At What"
+        sub="Each person's average at a station against everyone else's. Blue is quicker than the field, red is slower. This is where you find out you're the Cornhole guy."
+        svg={chartForm(view)} />
       <Card title="Station by Station"
         sub="Each game on its own, best times only. The coloured bar is the station king."
         svg={chartStationSmalls(res, C)} />

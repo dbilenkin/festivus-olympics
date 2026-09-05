@@ -7,9 +7,10 @@ import { pColor, pFigure } from "../lib/palette";
  *  view for a laptop propped on the picnic table while everyone else runs. */
 export default function LiveBoard() {
   const view = useStore((s) => s.view);
+  // Average is the ranking key: one lucky run should not decide the day.
   const rows = individualResults(view)
-    .filter((r) => r.best != null)
-    .sort((a, b) => a.best! - b.best!);
+    .filter((r) => r.avg != null)
+    .sort((a, b) => a.avg! - b.avg!);
 
   return (
     <div className="card side">
@@ -28,13 +29,13 @@ export default function LiveBoard() {
                 <use href={`#${pFigure(r.pid)}`} width="60" height="80" />
               </svg>
               <b>{r.name}</b>
-              <span className="t">{fmtClock(r.best)}</span>
+              <span className="t">{fmtClock(r.avg)}</span>
             </li>
           ))}
         </ol>
       )}
       <p className="note" style={{ marginTop: 10 }}>
-        Ranked by single best pentathlon. Updates as anyone on any phone enters a time.
+        Ranked by average pentathlon across every round. Updates as anyone enters a time.
       </p>
     </div>
   );

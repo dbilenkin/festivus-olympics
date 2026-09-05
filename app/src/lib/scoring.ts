@@ -51,6 +51,7 @@ export interface IndividualRow {
   totals: (number | null)[];
   best: number | null;
   avg: number | null;
+  worst: number | null;
   completed: number;
   perGameBest: Record<GameId, number | null>;
   bestRank: number | null;
@@ -78,6 +79,7 @@ export function individualResults(state: EventState): IndividualRow[] {
       totals,
       best: done.length ? Math.min(...done) : null,
       avg: done.length ? mean(done) : null,
+      worst: done.length ? Math.max(...done) : null,
       completed: done.length,
       perGameBest,
       bestRank: null,
@@ -204,4 +206,136 @@ export function teamOf(teams: EventState["teams"], pid: PlayerId): TeamKey | nul
   if (teams.A.members.includes(pid)) return "A";
   if (teams.B.members.includes(pid)) return "B";
   return null;
+}
+
+/* ============================================================================
+   Deeper cuts. Average is the ranking key, so spread and per-station form are
+   what actually explain a result -- these are the numbers behind the standings.
+   ============================================================================ */
+
+export interface Spread { best: number | null; avg: number | null; worst: number | null; n: number }
+
+const spreadOf = (vals: number[]): Spread => ({
+  best: vals.length ? Math.min(...vals) : null,
+  avg: mean(vals),
+  worst: vals.length ? Math.max(...vals) : null,
+  n: vals.length,
+});
+
+/** Every recorded time a player has posted at one station, across all rounds. */
+export function playerStationTimes(
+  state: EventState, pid: PlayerId, gid: GameId,
+): number[] {
+  return state.rounds
+    .map((r) => r.scores?.[pid]?.[gid])
+    .filter((v): v is number => v != null && isFinite(v));
+}
+
+/** Per station: the whole field's spread, plus every player's own. */
+export interface StationBreakdown {
+  gid: GameId;
+  name: string;
+  field: Spread;
+  players: { pid: PlayerId; name: string; spread: Spread }[];
+}
+
+export function stationBreakdown(state: EventState): StationBreakdown[] {
+  return state.games.map((g) => {
+    const all: number[] = [];
+    const players = state.players.map((p) => {
+      const vals = playerStationTimes(state, p.id, g.id);
+      all.push(...vals);
+      return { pid: p.id, name: p.name, spread: spreadOf(vals) };
+    });
+    return { gid: g.id, name: g.name, field: spreadOf(all), players };
+  });
+}
+
+/** A player's pentathlon spread: their best, average and worst full round. */
+export function pentathlonSpread(state: EventState, pid: PlayerId): Spread {
+  return spreadOf(
+    state.rounds
+      .map((r) => roundTotal(r, pid, state.games))
+      .filter((t): t is number => t != null),
+  );
+}
+
+/**
+ * How a player compares to the field at each station, as a ratio of the field average.
+ * 0.8 means they are 20% quicker than everyone else there; 1.3 means 30% slower.
+ * This is what turns "I am mid-table" into "I am the Cornhole guy".
+ */
+export interface Form { pid: PlayerId; name: string; byStation: Record<GameId, number | null> }
+
+export function relativeForm(state: EventState): Form[] {
+  const fieldAvg: Record<GameId, number | null> = {};
+  for (const g of state.games) {
+    const all = state.players.flatMap((p) => playerStationTimes(state, p.id, g.id));
+    fieldAvg[g.id] = mean(all);
+  }
+  return state.players.map((p) => {
+    const byStation: Record<GameId, number | null> = {};
+    for (const g of state.games) {
+      const mineAvg = mean(playerStationTimes(state, p.id, g.id));
+      const fa = fieldAvg[g.id];
+      byStation[g.id] = mineAvg != null && fa != null && fa > 0 ? mineAvg / fa : null;
+    }
+    return { pid: p.id, name: p.name, byStation };
+  });
+}
+
+/** Head to head: rounds where both finished, and who was quicker. */
+export interface H2H { wins: number; losses: number; played: number }
+
+export function headToHead(state: EventState): Record<PlayerId, Record<PlayerId, H2H>> {
+  const out: Record<PlayerId, Record<PlayerId, H2H>> = {};
+  for (const a of state.players) {
+    out[a.id] = {};
+    for (const b of state.players) {
+      if (a.id === b.id) continue;
+      let wins = 0, losses = 0, played = 0;
+      for (const r of state.rounds) {
+        const ta = roundTotal(r, a.id, state.games);
+        const tb = roundTotal(r, b.id, state.games);
+        if (ta == null || tb == null) continue;
+        played++;
+        if (ta < tb) wins++; else if (tb < ta) losses++;
+      }
+      out[a.id][b.id] = { wins, losses, played };
+    }
+  }
+  return out;
+}
+
+/** First complete round vs most recent. Positive means they got quicker. */
+export interface Trend { pid: PlayerId; name: string; first: number; last: number; delta: number }
+
+export function improvement(state: EventState): Trend[] {
+  return state.players.flatMap((p) => {
+    const totals = state.rounds
+      .map((r) => roundTotal(r, p.id, state.games))
+      .filter((t): t is number => t != null);
+    if (totals.length < 2) return [];
+    const first = totals[0], last = totals[totals.length - 1];
+    return [{ pid: p.id, name: p.name, first, last, delta: first - last }];
+  });
+}
+
+/** Single fastest and single slowest station times of the whole day. */
+export interface Extreme { v: number; pid: PlayerId; name: string; gid: GameId; game: string; when: string }
+
+export function extremes(state: EventState): { fastest: Extreme[]; slowest: Extreme[] } {
+  const all: Extreme[] = [];
+  for (const r of state.rounds) {
+    for (const p of state.players) {
+      for (const g of state.games) {
+        const v = r.scores?.[p.id]?.[g.id];
+        if (v != null && isFinite(v)) {
+          all.push({ v, pid: p.id, name: p.name, gid: g.id, game: g.name, when: r.label });
+        }
+      }
+    }
+  }
+  const byTime = [...all].sort((x, y) => x.v - y.v);
+  return { fastest: byTime.slice(0, 5), slowest: byTime.slice(-5).reverse() };
 }

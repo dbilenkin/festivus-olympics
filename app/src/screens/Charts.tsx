@@ -3,6 +3,7 @@ import { individualResults } from "../lib/scoring";
 import {
   ctxOf, chartLeaderboard, chartStacked, chartProgress, chartRelays, chartRelayLegs,
 } from "../charts/charts";
+import { chartConsistency, chartHeadToHead, chartMomentum } from "../charts/extra";
 
 function Card({ title, sub, svg }: { title: string; sub: string; svg: string }) {
   if (!svg) return null;
@@ -49,6 +50,15 @@ export default function Charts() {
       <Card title="Which Leg Lost It"
         sub="Every relay broken into its five legs. Line the two squads up and the gap is usually one block wide."
         svg={chartRelayLegs(C)} />
+      <Card title="Who You Can Count On"
+        sub="Best to worst round for each competitor, average marked. Average is what decides the day, so a short bar is the thing to want — a long one means one bad round from losing it."
+        svg={chartConsistency(view)} />
+      <Card title="Head to Head"
+        sub="Who actually beats whom, round for round, counting only rounds both finished. Settle it here."
+        svg={chartHeadToHead(view)} />
+      <Card title="Momentum"
+        sub="First complete round against the latest. Left is warming up, right is coming apart."
+        svg={chartMomentum(view)} />
       <Card title="Best vs. Average"
         sub="Solid bar is your single fastest pentathlon; the ghost bar underneath is your average across every round. A big gap means one lucky run."
         svg={c1} />
