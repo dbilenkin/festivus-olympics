@@ -17,6 +17,20 @@ Scorekeeping for five backyard games, eight competitors, two teams — rural Mar
 Result data is deliberately **not** committed — it contains real people's names.
 Backups live on disk and are gitignored.
 
+## Getting an event onto another phone
+
+There is no login and no server-side list of events. That is deliberate: writes are
+wide open, so the unguessable event id **is** the access control. An endpoint that
+listed events would let anyone enumerate and edit everyone else's day.
+
+So the link is the key. Three ways to pass it along:
+
+1. **Scan the QR** on the Share tab. Point a phone camera at the laptop. No typing.
+2. **Copy link** / **Share…** and send it however you like.
+3. Paste the link, or just the event id, into **Join an event** on the home screen.
+
+Anyone holding the link can read the scores and enter times. Treat it accordingly.
+
 ## The games
 
 Five stations, run back to back on one continuous clock. Tap once to bank a station

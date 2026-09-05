@@ -1,16 +1,52 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRoute, go, remember } from "./router";
 import { useStore, startSync } from "./sync/store";
 import Landing from "./screens/Landing";
 import Pentathlon from "./screens/Pentathlon";
 import Standings from "./screens/Standings";
 import SyncPill from "./components/SyncPill";
+import QR from "./components/QR";
 
 const TABS = [
   { id: "pent", label: "Pentathlon" },
   { id: "stand", label: "Standings" },
   { id: "share", label: "Share" },
 ];
+
+function Share({ eventId, link }: { eventId: string; link: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <>
+      <div className="card qrcard">
+        <h2>Point a phone at this</h2>
+        <QR text={link} />
+        <p className="note" style={{ marginTop: 12, textAlign: "center" }}>
+          Open the camera and point it here. No typing, no texting.
+        </p>
+      </div>
+
+      <div className="card">
+        <h2>Or send the link</h2>
+        <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+        <div className="btnrow">
+          <button className="bigbtn" onClick={async () => {
+            try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+            catch { /* clipboard blocked -- the field above is selectable */ }
+          }}>{copied ? "Copied" : "Copy link"}</button>
+          {typeof navigator !== "undefined" && "share" in navigator && (
+            <button className="bigbtn alt" onClick={() => navigator.share?.({
+              title: "Pond Neck Olympics", url: link,
+            }).catch(() => {})}>Share…</button>
+          )}
+        </div>
+        <p className="note" style={{ marginTop: 14 }}>
+          Anyone with this link can see the scores <b>and enter times</b> &mdash; there is
+          no login, so the link is the key. Event id <code>{eventId}</code>
+        </p>
+      </div>
+    </>
+  );
+}
 
 export default function App() {
   const { eventId, panel } = useRoute();
@@ -64,21 +100,7 @@ export default function App() {
 
       {panel === "pent" && <Pentathlon />}
       {panel === "stand" && <Standings />}
-      {panel === "share" && (
-        <div className="card">
-          <h2>Share this event</h2>
-          <p className="note" style={{ marginBottom: 12 }}>
-            Anyone with this link can see the scores and enter times. There is no login,
-            so treat the link as the key.
-          </p>
-          <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
-          <button className="bigbtn" style={{ marginTop: 10 }}
-            onClick={() => navigator.clipboard?.writeText(link)}>Copy link</button>
-          <p className="note" style={{ marginTop: 14 }}>
-            Event id <code>{eventId}</code>
-          </p>
-        </div>
-      )}
+      {panel === "share" && <Share eventId={eventId} link={link} />}
     </div>
   );
 }

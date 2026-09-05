@@ -196,3 +196,9 @@ td input{width:64px; text-align:right; font-family:var(--mono); font-size:13px; 
 code{font-family:var(--mono); font-size:12px; background:var(--cream); padding:1px 5px; border-radius:4px}
 .crash{font-family:var(--mono); font-size:11px; background:var(--cream); border:2px solid var(--dirt);
   border-radius:8px; padding:10px; overflow-x:auto; margin-bottom:12px; white-space:pre-wrap}
+.qrcard{display:flex; flex-direction:column; align-items:center}
+.qrcard h2{align-self:flex-start}
+.qrcard svg{border:3px solid var(--ink); box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.btnrow{display:flex; gap:8px; margin-top:10px}
+.btnrow .bigbtn{margin-top:0}
+.bigbtn.alt{background:var(--plain,#2f5aa0)}
