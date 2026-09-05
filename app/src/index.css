@@ -83,7 +83,18 @@ body{
   color:#a99a80; padding:0 16px 6px}
 
 /* ===================== SETUP =====================*/
-.wrap{max-width:620px; margin:0 auto; padding:20px 16px 40px}
+/* Phone first, but a laptop has room for the whole grid plus live standings beside it.
+   The old fixed 620px both wasted half a laptop screen AND clipped the Total column. */
+.wrap{max-width:640px; margin:0 auto; padding:20px 16px 40px}
+@media (min-width:760px){ .wrap{max-width:1180px; padding:24px 24px 60px} }
+
+/* two-column on a laptop: score grid on the left, standings alongside */
+.deck{display:grid; gap:20px}
+/* Only split once there is genuinely room for the full grid AND the board -- below
+   this the single column is wider and the Total column stops getting clipped. */
+@media (min-width:1120px){ .deck{grid-template-columns:minmax(0,1fr) 300px; align-items:start} }
+.deck > *{min-width:0}
+.side{position:sticky; top:16px}
 .hero-lite{text-align:center; padding:10px 0 18px}
 .hero-lite h1{font-size:clamp(28px,8vw,46px); font-weight:900; text-transform:uppercase;
   letter-spacing:-.03em; line-height:.9; color:var(--barn);
@@ -202,3 +213,45 @@ code{font-family:var(--mono); font-size:12px; background:var(--cream); padding:1
 .btnrow{display:flex; gap:8px; margin-top:10px}
 .btnrow .bigbtn{margin-top:0}
 .bigbtn.alt{background:var(--plain,#2f5aa0)}
+
+/* ============ phone: one card per competitor ============ */
+.cards{display:grid; gap:10px}
+.pcard{border:3px solid var(--ink); border-radius:13px; background:#fff;
+  box-shadow:0 3px 0 rgba(0,0,0,.18); overflow:hidden}
+.pcard.lead{box-shadow:0 3px 0 var(--corn-dk,#b8891f)}
+.pcard-hd{display:flex; align-items:center; gap:9px; padding:9px 11px;
+  background:var(--cream); border-bottom:2px solid var(--ink)}
+.pcard.lead .pcard-hd{background:rgba(232,185,59,.42)}
+.pcard-hd svg{width:26px; height:34px; flex:0 0 auto}
+.pcard-hd b{font-family:var(--sans); font-size:17px; font-weight:900}
+.ptot{margin-left:auto; font-family:var(--mono); font-size:15px; font-weight:800}
+.runbtn.big{width:auto; height:36px; padding:0 12px; display:inline-flex; align-items:center;
+  gap:5px; font-size:12px}
+.runbtn.big em{font-style:normal; font-family:var(--sans); font-weight:900;
+  letter-spacing:.08em; text-transform:uppercase; font-size:11px}
+.pcard-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:8px; padding:11px}
+.scell{display:block}
+.scell span{display:block; font-family:var(--sans); font-size:9.5px; font-weight:900;
+  letter-spacing:.1em; text-transform:uppercase; margin-bottom:3px}
+.scell input{width:100%; text-align:right; font-family:var(--mono); font-size:16px; padding:9px 8px}
+
+/* wide table: give every station a real column and stop clipping Total */
+@media (min-width:760px){
+  td input{width:82px; font-size:15px; padding:8px}
+  th,td{padding:9px 9px}
+  .pcard-grid{grid-template-columns:repeat(5,1fr)}
+}
+/* the split layout gives the grid less room, so tighten the cells rather than clip */
+@media (min-width:1120px){
+  .deck td input{width:72px; font-size:14px; padding:7px 6px}
+  .deck th,.deck td{padding:8px 7px}
+}
+.board{list-style:none; margin:0; padding:0}
+.board li{display:flex; align-items:center; gap:8px; padding:7px 4px;
+  border-bottom:1px dashed #d9cbb0; font-family:var(--sans)}
+.board li:last-child{border-bottom:0}
+.board li.lead{background:rgba(232,185,59,.3); border-radius:8px; padding-left:8px}
+.board .pos{width:18px; font-size:11px; font-weight:900; color:var(--dirt)}
+.board svg{width:22px; height:29px; flex:0 0 auto}
+.board b{flex:1 1 auto; font-size:14px}
+.board .t{font-family:var(--mono); font-size:13px; font-weight:800}

@@ -4,6 +4,7 @@ import { K } from "../sync/facts";
 import { parseTime, fmtClock } from "../lib/time";
 import { roundTotal, rankBy } from "../lib/scoring";
 import { pColor, pFigure, gColor } from "../lib/palette";
+import { useWide } from "../lib/useMedia";
 import RunTimer from "../run/RunTimer";
 import { loadRun, type RunPersist } from "../run/useRunClock";
 
@@ -54,6 +55,7 @@ export default function Pentathlon() {
   const [ri, setRi] = useState(0);
   const [resume] = useState<RunPersist | null>(() => loadRun());
 
+  const wide = useWide();
   const { players, games, rounds } = view;
   const round = rounds[Math.min(ri, Math.max(0, rounds.length - 1))];
 
@@ -132,53 +134,81 @@ export default function Pentathlon() {
           </div>
         )}
 
-        <div className="tbl">
-          <table>
-            <thead>
-              <tr>
-                <th>Competitor</th>
-                {games.map((g, i) => (
-                  <th key={g.id} className="num" style={{ color: gColor(i) }}>
-                    {g.name.slice(0, 4)}
-                  </th>
-                ))}
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((p) => {
-                const t = totals.find((x) => x.id === p.id)!.value;
-                const rk = ranks.get(p.id);
-                return (
-                  <tr key={p.id} className={rk === 1 ? "r1" : ""}>
-                    <td>
-                      <span className="who">
-                        <svg viewBox="0 0 60 80" style={{ color: pColor(p.id) }}>
-                          <use href={`#${pFigure(p.id)}`} width="60" height="80" />
-                        </svg>
-                        <b>{p.name}</b>
-                        <button className="runbtn" onClick={() => setRunFor(p.id)}>▶</button>
-                      </span>
-                    </td>
-                    {games.map((g) => {
-                      const v = round.scores[p.id]?.[g.id];
-                      return (
+        {wide ? (
+          <div className="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Competitor</th>
+                  {games.map((g, i) => (
+                    <th key={g.id} className="num" style={{ color: gColor(i) }}>{g.name}</th>
+                  ))}
+                  <th className="num">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p) => {
+                  const t = totals.find((x) => x.id === p.id)!.value;
+                  return (
+                    <tr key={p.id} className={ranks.get(p.id) === 1 ? "r1" : ""}>
+                      <td>
+                        <span className="who">
+                          <svg viewBox="0 0 60 80" style={{ color: pColor(p.id) }}>
+                            <use href={`#${pFigure(p.id)}`} width="60" height="80" />
+                          </svg>
+                          <b>{p.name}</b>
+                          <button className="runbtn" title={`Time ${p.name}`}
+                            onClick={() => setRunFor(p.id)}>&#9654;</button>
+                        </span>
+                      </td>
+                      {games.map((g) => (
                         <td key={g.id}>
-                          <ScoreCell
-                            value={v ?? null}
-                            onCommit={(parsed) =>
-                              putFact(K.score(round.id, p.id, g.id), parsed)}
-                          />
+                          <ScoreCell value={round.scores[p.id]?.[g.id] ?? null}
+                            onCommit={(v) => putFact(K.score(round.id, p.id, g.id), v)} />
                         </td>
-                      );
-                    })}
-                    <td className="num tot">{fmtClock(t)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      ))}
+                      <td className="num tot">{fmtClock(t)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* On a phone a five-column numeric grid cannot fit beside the names, and
+             sideways-scrolling to reach Basketball is miserable. One card per
+             competitor keeps every station visible and labelled. */
+          <div className="cards">
+            {players.map((p) => {
+              const t = totals.find((x) => x.id === p.id)!.value;
+              const rk = ranks.get(p.id);
+              return (
+                <div className={"pcard" + (rk === 1 ? " lead" : "")} key={p.id}>
+                  <div className="pcard-hd">
+                    <svg viewBox="0 0 60 80" style={{ color: pColor(p.id) }}>
+                      <use href={`#${pFigure(p.id)}`} width="60" height="80" />
+                    </svg>
+                    <b>{p.name}</b>
+                    <span className="ptot">{fmtClock(t)}</span>
+                    <button className="runbtn big" onClick={() => setRunFor(p.id)}>
+                      &#9654;<em>Run</em>
+                    </button>
+                  </div>
+                  <div className="pcard-grid">
+                    {games.map((g, i) => (
+                      <label key={g.id} className="scell">
+                        <span style={{ color: gColor(i) }}>{g.name}</span>
+                        <ScoreCell value={round.scores[p.id]?.[g.id] ?? null}
+                          onCommit={(v) => putFact(K.score(round.id, p.id, g.id), v)} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <p className="note" style={{ marginTop: 10 }}>
           A total only counts once all {games.length} stations are in. Times sync to
           everyone else automatically.

@@ -6,6 +6,8 @@ import Pentathlon from "./screens/Pentathlon";
 import Standings from "./screens/Standings";
 import SyncPill from "./components/SyncPill";
 import QR from "./components/QR";
+import LiveBoard from "./components/LiveBoard";
+import { useWide } from "./lib/useMedia";
 
 const TABS = [
   { id: "pent", label: "Pentathlon" },
@@ -53,6 +55,7 @@ export default function App() {
   const openId = useStore((s) => s.eventId);
   const name = useStore((s) => s.name);
   const conflicts = useStore((s) => s.conflicts);
+  const wide = useWide();
 
   useEffect(() => {
     if (eventId && eventId !== openId) useStore.getState().open(eventId);
@@ -98,7 +101,11 @@ export default function App() {
         </div>
       )}
 
-      {panel === "pent" && <Pentathlon />}
+      {panel === "pent" && (
+        wide
+          ? <div className="deck"><div><Pentathlon /></div><LiveBoard /></div>
+          : <Pentathlon />
+      )}
       {panel === "stand" && <Standings />}
       {panel === "share" && <Share eventId={eventId} link={link} />}
     </div>
