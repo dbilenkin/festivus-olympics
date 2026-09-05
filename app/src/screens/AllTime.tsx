@@ -1,13 +1,45 @@
 import { useEffect, useState } from "react";
-import { recents, go } from "../router";
+import { recents, go, remember } from "../router";
+import { fetchEvent } from "../sync/client";
+import { extractEventId } from "./Landing";
 import { loadEvents, aggregate, type AllTime as AllTimeData } from "../sync/multi";
 import { fmtClock, fmtShort } from "../lib/time";
 import { pColor, pFigure } from "../lib/palette";
 import { chartCareerSlope } from "../charts/extra";
 
+function AddEvent({ onAdded }: { onAdded: () => void }) {
+  const [v, setV] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <div className="card">
+      <div className="card-hd"><h3>Add another year</h3>
+        <span className="sub">this board only sees events this device has opened</span></div>
+      <p className="note" style={{ marginBottom: 12 }}>
+        There is no server-side list of events &mdash; the link is the key. Paste one here
+        and it joins the all-time board permanently.
+      </p>
+      <label className="fld">
+        <span>Link or event id</span>
+        <input value={v} placeholder="https://…#/e/…" onChange={(e) => setV(e.target.value)} />
+      </label>
+      <button className="btn green" disabled={!v.trim()} onClick={async () => {
+        const id = extractEventId(v);
+        if (!id) { setMsg("That doesn’t look like a Pond Neck link."); return; }
+        try {
+          const snap = await fetchEvent(id);
+          remember(id, snap.name ?? id);
+          setV(""); setMsg(null); onAdded();
+        } catch { setMsg(`No event called “${id}”.`); }
+      }}>Add it</button>
+      {msg && <p className="note" style={{ color: "var(--barn)", marginTop: 10 }}>{msg}</p>}
+    </div>
+  );
+}
+
 export default function AllTime() {
   const [data, setData] = useState<AllTimeData | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
   const ids = recents().map((r) => r.id);
 
   useEffect(() => {
@@ -17,15 +49,17 @@ export default function AllTime() {
       .catch(() => { if (live) setErr("Couldn’t reach the server"); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids.join(",")]);
+  }, [ids.join(","), nonce]);
 
   if (!ids.length) {
     return (
-      <div className="empty">
-        <h4>No events on this device</h4>
-        <p>Open or create an event first — the all-time view is built from the ones this
-          device knows about.</p>
-      </div>
+      <>
+        <div className="empty">
+          <h4>No events on this device</h4>
+          <p>The all-time board is built from events this device has opened.</p>
+        </div>
+        <AddEvent onAdded={() => setNonce((n) => n + 1)} />
+      </>
     );
   }
   if (err) return <div className="card"><p className="note">{err}</p></div>;
@@ -151,6 +185,8 @@ export default function AllTime() {
           different games, so they keep separate records.
         </p>
       </div>
+
+      <AddEvent onAdded={() => setNonce((n) => n + 1)} />
 
       <div className="card">
         <div className="card-hd"><h3>The events</h3></div>

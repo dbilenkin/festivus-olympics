@@ -97,6 +97,11 @@ export default function App() {
                 <span className="ic">{t.ic}</span>{t.label}
               </button>
             ))}
+            {/* Reachable from inside an event, not just from the home screen. */}
+            <button className="tab" role="tab" aria-selected={false}
+              onClick={() => go(null, "all")}>
+              <span className="ic">&#127941;</span>All Time
+            </button>
           </div>
         </nav>
       )}

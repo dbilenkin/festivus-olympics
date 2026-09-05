@@ -73,10 +73,10 @@ export default function Landing() {
         <p>Five games · eight souls · two teams</p>
       </div>
 
-      {list.length > 1 && (
+      {list.length > 0 && (
         <div className="card corn">
           <div className="card-hd"><h3>All time</h3>
-            <span className="sub">{list.length} events on this device</span></div>
+            <span className="sub">{list.length} event{list.length === 1 ? "" : "s"} on this device</span></div>
           <p className="note" style={{ marginBottom: 12 }}>
             Career averages, the roll of honour, year-on-year form and all-time station
             records across every event this device knows about.
